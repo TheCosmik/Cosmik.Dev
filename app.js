@@ -1,22 +1,29 @@
-const ACCESS_CODE = 'cosmik';
-
 const form = document.getElementById('gate-form');
 const panel = document.querySelector('.panel');
 const input = document.getElementById('password');
 const message = document.getElementById('gate-message');
+const submitBtn = form.querySelector('button');
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const value = input.value.trim().toLowerCase();
+  const value = input.value.trim();
+  submitBtn.disabled = true;
 
-  if (value === ACCESS_CODE) {
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: value })
+    });
+
+    if (!res.ok) throw new Error('denied');
+
     message.textContent = 'ACCESS GRANTED';
     message.classList.add('show', 'granted');
-    form.querySelector('button').disabled = true;
     setTimeout(() => {
       window.location.href = 'home.html';
     }, 700);
-  } else {
+  } catch {
     message.textContent = 'ACCESS DENIED';
     message.classList.remove('granted');
     message.classList.add('show');
@@ -25,5 +32,6 @@ form.addEventListener('submit', (e) => {
     panel.classList.add('shake');
     input.value = '';
     input.focus();
+    submitBtn.disabled = false;
   }
 });
