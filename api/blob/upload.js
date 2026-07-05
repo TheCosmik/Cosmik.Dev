@@ -1,5 +1,5 @@
 import { handleUpload } from '@vercel/blob/client';
-import { verifySessionToken, getCookieValue } from '../../lib/verify-session.js';
+import { verifySessionToken, getCookieValue } from '../../lib/verify-session-node.js';
 
 export default async function handler(request) {
   const body = await request.json();
@@ -11,7 +11,7 @@ export default async function handler(request) {
       onBeforeGenerateToken: async (pathname) => {
         const cookie = request.headers.get('cookie') || '';
         const token = getCookieValue(cookie, 'site_auth');
-        const valid = await verifySessionToken(token, process.env.SESSION_SECRET);
+        const valid = verifySessionToken(token, process.env.SESSION_SECRET);
 
         if (!valid) {
           throw new Error('Not authenticated');
