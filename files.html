@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Files</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="vignette"></div>
+
+  <main class="files-page">
+    <div class="files-header">
+      <h1 class="dashboard-title">My Files</h1>
+      <a href="home.html" class="back-link">&larr; Back to Projects</a>
+    </div>
+
+    <form id="upload-form" class="upload-panel">
+      <input id="file-input" type="file" required>
+      <button type="submit" class="btn primary">Upload</button>
+    </form>
+    <div id="upload-status" class="upload-status"></div>
+
+    <div id="file-list" class="file-list"></div>
+  </main>
+
+  <script src="background.js"></script>
+  <script type="module" src="files.js"></script>
+</body>
+</html>
