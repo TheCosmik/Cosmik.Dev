@@ -1,27 +1,17 @@
-import { list } from '@vercel/blob';
-import { verifySessionToken, getCookieValue } from '../../lib/verify-session-node.js';
+const { list } = require('@vercel/blob');
+const { verifySessionToken, getCookieValue } = require('../../lib/verify-session-node.js');
 
-export default async function handler(request) {
-  console.log('[blob/list] handler start');
+module.exports = async function handler(req, res) {
   try {
-    const cookie = request.headers.get('cookie') || '';
-    const token = getCookieValue(cookie, 'site_auth');
+    const token = getCookieValue(req.headers.cookie, 'site_auth');
     const valid = verifySessionToken(token, process.env.SESSION_SECRET);
-    console.log('[blob/list] auth valid:', valid);
 
     if (!valid) {
-      return Response.json({ error: 'Not authenticated' }, { status: 401 });
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
     }
 
-    console.log('[blob/list] env check', {
-      hasReadWriteToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      hasOidcToken: Boolean(process.env.VERCEL_OIDC_TOKEN),
-      hasStoreId: Boolean(process.env.BLOB_STORE_ID)
-    });
-
-    console.log('[blob/list] calling list()');
-    const { blobs } = await list({ abortSignal: AbortSignal.timeout(8000) });
-    console.log('[blob/list] list() returned', blobs.length, 'blobs');
+    const { blobs } = await list();
 
     const files = blobs
       .map((b) => ({
@@ -31,9 +21,8 @@ export default async function handler(request) {
       }))
       .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
 
-    return Response.json({ files });
+    res.status(200).json({ files });
   } catch (error) {
-    console.log('[blob/list] caught error:', error.name, error.message);
-    return Response.json({ error: error.message, name: error.name }, { status: 500 });
+    res.status(500).json({ error: error.message });
   }
-}
+};

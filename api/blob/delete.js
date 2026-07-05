@@ -1,27 +1,27 @@
-import { del } from '@vercel/blob';
-import { verifySessionToken, getCookieValue } from '../../lib/verify-session-node.js';
+const { del } = require('@vercel/blob');
+const { verifySessionToken, getCookieValue } = require('../../lib/verify-session-node.js');
 
-export default async function handler(request) {
+module.exports = async function handler(req, res) {
   try {
-    const cookie = request.headers.get('cookie') || '';
-    const token = getCookieValue(cookie, 'site_auth');
+    const token = getCookieValue(req.headers.cookie, 'site_auth');
     const valid = verifySessionToken(token, process.env.SESSION_SECRET);
 
     if (!valid) {
-      return Response.json({ error: 'Not authenticated' }, { status: 401 });
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
     }
 
-    const body = await request.json();
-    const pathname = body && body.pathname;
+    const pathname = req.body && req.body.pathname;
 
     if (!pathname) {
-      return Response.json({ error: 'Missing pathname' }, { status: 400 });
+      res.status(400).json({ error: 'Missing pathname' });
+      return;
     }
 
     await del(pathname);
 
-    return Response.json({ ok: true });
+    res.status(200).json({ ok: true });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    res.status(500).json({ error: error.message });
   }
-}
+};

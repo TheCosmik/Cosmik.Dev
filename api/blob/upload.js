@@ -1,16 +1,15 @@
-import { handleUpload } from '@vercel/blob/client';
-import { verifySessionToken, getCookieValue } from '../../lib/verify-session-node.js';
+const { handleUpload } = require('@vercel/blob/client');
+const { verifySessionToken, getCookieValue } = require('../../lib/verify-session-node.js');
 
-export default async function handler(request) {
-  const body = await request.json();
+module.exports = async function handler(req, res) {
+  const body = req.body;
 
   try {
     const jsonResponse = await handleUpload({
       body,
-      request,
+      request: req,
       onBeforeGenerateToken: async (pathname) => {
-        const cookie = request.headers.get('cookie') || '';
-        const token = getCookieValue(cookie, 'site_auth');
+        const token = getCookieValue(req.headers.cookie, 'site_auth');
         const valid = verifySessionToken(token, process.env.SESSION_SECRET);
 
         if (!valid) {
@@ -28,8 +27,8 @@ export default async function handler(request) {
       }
     });
 
-    return Response.json(jsonResponse);
+    res.status(200).json(jsonResponse);
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 400 });
+    res.status(400).json({ error: error.message });
   }
-}
+};

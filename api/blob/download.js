@@ -1,40 +1,40 @@
-import { get } from '@vercel/blob';
-import { verifySessionToken, getCookieValue } from '../../lib/verify-session-node.js';
+const { Readable } = require('stream');
+const { get } = require('@vercel/blob');
+const { verifySessionToken, getCookieValue } = require('../../lib/verify-session-node.js');
 
-export default async function handler(request) {
+module.exports = async function handler(req, res) {
   try {
-    const cookie = request.headers.get('cookie') || '';
-    const token = getCookieValue(cookie, 'site_auth');
+    const token = getCookieValue(req.headers.cookie, 'site_auth');
     const valid = verifySessionToken(token, process.env.SESSION_SECRET);
 
     if (!valid) {
-      return new Response('Not authenticated', { status: 401 });
+      res.status(401).send('Not authenticated');
+      return;
     }
 
-    const { searchParams } = new URL(request.url);
-    const pathname = searchParams.get('path');
+    const pathname = req.query.path;
 
     if (!pathname) {
-      return Response.json({ error: 'Missing path' }, { status: 400 });
+      res.status(400).json({ error: 'Missing path' });
+      return;
     }
 
     const result = await get(pathname, { access: 'private' });
 
     if (!result || result.statusCode !== 200) {
-      return new Response('Not found', { status: 404 });
+      res.status(404).send('Not found');
+      return;
     }
 
     const filename = pathname.split('/').pop();
 
-    return new Response(result.stream, {
-      headers: {
-        'Content-Type': result.blob.contentType || 'application/octet-stream',
-        'X-Content-Type-Options': 'nosniff',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'private, no-store'
-      }
-    });
+    res.setHeader('Content-Type', result.blob.contentType || 'application/octet-stream');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
+
+    Readable.fromWeb(result.stream).pipe(res);
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    res.status(500).json({ error: error.message });
   }
-}
+};
