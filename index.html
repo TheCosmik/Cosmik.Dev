@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alex Harrington</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="vignette"></div>
+
+  <main class="gate">
+    <form id="gate-form" class="panel" autocomplete="off">
+      <div class="panel-glow"></div>
+      <label for="password" class="panel-label">ENTER ACCESS CODE</label>
+      <input id="password" type="password" name="password" spellcheck="false" autofocus>
+      <button type="submit" aria-label="Submit">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <p id="gate-message" class="gate-message"></p>
+    </form>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
