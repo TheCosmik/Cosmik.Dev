@@ -4,22 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alex Harrington</title>
-<style>
-  html, body {
-    margin: 0;
-    height: 100%;
-    background: #04050a;
-    color: #dff2ff;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
-  h1 { font-weight: 300; letter-spacing: 0.1em; }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Welcome. Site under construction.</h1>
+  <canvas id="space"></canvas>
+  <div class="vignette"></div>
+
+  <main class="dashboard">
+    <h1 class="dashboard-title">Projects</h1>
+    <div id="project-grid" class="project-grid"></div>
+  </main>
+
+  <div id="project-modal" class="modal-overlay">
+    <div class="modal-panel">
+      <button id="modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <span id="modal-icon" class="modal-icon"></span>
+      <h2 id="modal-title" class="modal-title"></h2>
+      <p id="modal-tagline" class="modal-tagline"></p>
+      <div class="modal-links">
+        <a id="modal-live" class="modal-link primary" href="#" target="_blank" rel="noopener">Visit Site</a>
+        <a id="modal-repo" class="modal-link" href="#" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="background.js"></script>
+  <script src="projects.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
