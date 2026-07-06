@@ -1,7 +1,7 @@
 import { verifySessionToken, getCookieValue } from './lib/verify-session.js';
 
 export const config = {
-  matcher: ['/home.html', '/files.html']
+  matcher: ['/home.html']
 };
 
 export default async function middleware(request) {
