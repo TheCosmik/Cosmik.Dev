@@ -14,5 +14,13 @@ const PROJECTS = [
     accent: [107, 226, 107],
     liveUrl: 'https://build-a-team-seven.vercel.app/',
     repoUrl: 'https://github.com/TheCosmik/BuildATeam'
+  },
+  {
+    name: 'Sprite Tracker',
+    tagline: 'Track every sprite variant you own — and what level it\'s at',
+    icon: '\u{1F47E}',
+    accent: [200, 130, 255],
+    liveUrl: 'https://sprite-tracker-eight.vercel.app/',
+    repoUrl: 'https://github.com/TheCosmik/SpriteTracker'
   }
 ];
