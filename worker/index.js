@@ -4,6 +4,15 @@ import {
   timingSafeStringEqual,
   getCookieValue
 } from '../lib/verify-session.js';
+import {
+  handleAuthStart,
+  handleAuthCallback,
+  handleTwitchWebhook,
+  handleKickWebhook,
+  handleChatRecent,
+  handleChatStatus,
+  handleChatModerate
+} from './chat.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
@@ -238,7 +247,43 @@ export default {
       return handleClickStats(request, env);
     }
 
-    if (url.pathname === '/home.html') {
+    if (url.pathname === '/api/auth/twitch/start') {
+      return handleAuthStart(request, env, 'twitch');
+    }
+
+    if (url.pathname === '/api/auth/twitch/callback') {
+      return handleAuthCallback(request, env, 'twitch');
+    }
+
+    if (url.pathname === '/api/auth/kick/start') {
+      return handleAuthStart(request, env, 'kick');
+    }
+
+    if (url.pathname === '/api/auth/kick/callback') {
+      return handleAuthCallback(request, env, 'kick');
+    }
+
+    if (url.pathname === '/api/webhooks/twitch') {
+      return handleTwitchWebhook(request, env, ctx);
+    }
+
+    if (url.pathname === '/api/webhooks/kick') {
+      return handleKickWebhook(request, env, ctx);
+    }
+
+    if (url.pathname === '/api/chat/recent') {
+      return handleChatRecent(request, env);
+    }
+
+    if (url.pathname === '/api/chat/status') {
+      return handleChatStatus(request, env);
+    }
+
+    if (url.pathname === '/api/chat/moderate') {
+      return handleChatModerate(request, env);
+    }
+
+    if (url.pathname === '/home.html' || url.pathname === '/chat.html') {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));
