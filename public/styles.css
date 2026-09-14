@@ -268,6 +268,28 @@ html, body {
 
 /* Dashboard */
 
+.back-link {
+  position: fixed;
+  top: 28px;
+  left: 28px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s ease, gap 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--green);
+  gap: 10px;
+}
+
 .dashboard {
   position: fixed;
   inset: 0;
@@ -276,6 +298,12 @@ html, body {
   flex-direction: column;
   align-items: center;
   padding: 96px 24px 60px;
+  pointer-events: none;
+}
+
+.dashboard .dashboard-header,
+.dashboard .project-grid {
+  pointer-events: auto;
 }
 
 .dashboard-header {
