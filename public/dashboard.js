@@ -54,6 +54,19 @@ PROJECTS.forEach((project) => {
   }
 });
 
+const clickStatsList = document.getElementById('click-stats-list');
+const LINK_LABELS = { kick: 'Kick', twitch: 'Twitch', x: 'X', discord: 'Discord' };
+
+fetch('/api/click-stats')
+  .then((res) => (res.ok ? res.json() : null))
+  .then((stats) => {
+    if (!stats) return;
+    clickStatsList.innerHTML = Object.entries(LINK_LABELS)
+      .map(([key, label]) => `<span>${label} <strong>${stats[key] || 0}</strong></span>`)
+      .join('');
+  })
+  .catch(() => {});
+
 function openModal(project) {
   modalPanel.style.setProperty('--accent', `${project.accent[0]}, ${project.accent[1]}, ${project.accent[2]}`);
   modalIcon.textContent = project.icon;

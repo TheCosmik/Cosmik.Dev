@@ -409,6 +409,41 @@ html, body {
   line-height: 1.55;
 }
 
+.click-stats {
+  width: min(880px, 100%);
+  margin-top: 40px;
+  pointer-events: auto;
+}
+
+.click-stats-title {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.click-stats-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.click-stats-list span {
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.click-stats-list strong {
+  color: var(--green);
+  margin-left: 6px;
+}
+
 .project-stats {
   display: flex;
   align-items: center;

@@ -6,6 +6,9 @@ import {
 } from '../lib/verify-session.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_WINDOW_SECONDS = 300; // 5 minutes
+const TRACKED_LINKS = ['kick', 'twitch', 'x', 'discord'];
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -14,9 +17,33 @@ function json(data, status = 200, headers = {}) {
   });
 }
 
+async function getLoginFailCount(env, ip) {
+  if (!env.COSMIK_KV) return 0;
+  const raw = await env.COSMIK_KV.get(`login-fail:${ip}`);
+  return raw ? parseInt(raw, 10) : 0;
+}
+
+async function recordLoginFailure(env, ip, count) {
+  if (!env.COSMIK_KV) return;
+  await env.COSMIK_KV.put(`login-fail:${ip}`, String(count + 1), {
+    expirationTtl: LOGIN_WINDOW_SECONDS
+  });
+}
+
+async function clearLoginFailures(env, ip) {
+  if (!env.COSMIK_KV) return;
+  await env.COSMIK_KV.delete(`login-fail:${ip}`);
+}
+
 async function handleLogin(request, env) {
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405);
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const failCount = await getLoginFailCount(env, ip);
+  if (failCount >= LOGIN_MAX_ATTEMPTS) {
+    return json({ ok: false, error: 'rate_limited' }, 429);
   }
 
   const expectedPassword = env.SITE_PASSWORD;
@@ -34,8 +61,11 @@ async function handleLogin(request, env) {
 
   const password = body && body.password;
   if (!password || !(await timingSafeStringEqual(password, expectedPassword))) {
+    await recordLoginFailure(env, ip, failCount);
     return json({ ok: false }, 401);
   }
+
+  await clearLoginFailures(env, ip);
 
   const expiry = Math.floor(Date.now() / 1000) + SESSION_DURATION_SECONDS;
   const signature = await signSessionToken(sessionSecret, expiry);
@@ -48,6 +78,47 @@ async function handleLogin(request, env) {
       'Set-Cookie': `site_auth=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_DURATION_SECONDS}`
     }
   );
+}
+
+async function handleClick(request, env) {
+  if (request.method !== 'POST' || !env.COSMIK_KV) {
+    return json({ ok: false }, 405);
+  }
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
+
+  const link = body && body.link;
+  if (!TRACKED_LINKS.includes(link)) {
+    return json({ ok: false }, 400);
+  }
+
+  const key = `clicks:${link}`;
+  const current = parseInt((await env.COSMIK_KV.get(key)) || '0', 10);
+  await env.COSMIK_KV.put(key, String(current + 1));
+  return json({ ok: true });
+}
+
+async function handleClickStats(request, env) {
+  const cookieHeader = request.headers.get('cookie') || '';
+  const token = getCookieValue(cookieHeader, 'site_auth');
+  const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));
+  if (!valid) {
+    return json({ error: 'unauthorized' }, 401);
+  }
+  if (!env.COSMIK_KV) {
+    return json({ error: 'not configured' }, 500);
+  }
+
+  const stats = {};
+  for (const link of TRACKED_LINKS) {
+    stats[link] = parseInt((await env.COSMIK_KV.get(`clicks:${link}`)) || '0', 10);
+  }
+  return json(stats);
 }
 
 async function getKickLive() {
@@ -157,6 +228,14 @@ export default {
 
     if (url.pathname === '/api/repo-stats') {
       return handleRepoStats(request, env, ctx);
+    }
+
+    if (url.pathname === '/api/click') {
+      return handleClick(request, env);
+    }
+
+    if (url.pathname === '/api/click-stats') {
+      return handleClickStats(request, env);
     }
 
     if (url.pathname === '/home.html') {

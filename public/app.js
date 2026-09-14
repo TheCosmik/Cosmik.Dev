@@ -12,6 +12,13 @@ LINKS.forEach((link) => {
     <span class="link-icon">${link.icon}</span>
     <span class="link-name">${link.name}</span>
   `;
+  a.addEventListener('click', () => {
+    fetch('/api/click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ link: link.name.toLowerCase() })
+    }).catch(() => {});
+  });
   linkList.appendChild(a);
   linkElements[link.name.toLowerCase()] = a;
 });
@@ -72,6 +79,15 @@ form.addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: value })
     });
+
+    if (res.status === 429) {
+      message.textContent = 'TOO MANY ATTEMPTS';
+      message.classList.remove('granted');
+      message.classList.add('show');
+      input.value = '';
+      submitBtn.disabled = false;
+      return;
+    }
 
     if (!res.ok) throw new Error('denied');
 
