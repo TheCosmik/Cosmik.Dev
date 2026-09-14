@@ -1,3 +1,19 @@
+:root {
+  --bg: #07090a;
+  --bg-panel: #121712;
+  --bg-panel-raised: #171d17;
+  --border: #2c3a26;
+  --border-soft: #1a231a;
+  --green: #3fe066;
+  --green-dim: #1f9e40;
+  --green-glow: rgba(63, 224, 102, 0.35);
+  --text: #eaf5ea;
+  --text-dim: #a2b6a3;
+  --text-faint: #647466;
+  --danger: #ff5c45;
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -6,9 +22,9 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0f0e0c;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: #f2ede2;
+  background: var(--bg);
+  font-family: 'Oswald', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text);
 }
 
 #space {
@@ -32,43 +48,119 @@ html, body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 35%, rgba(10, 9, 7, 0.6) 100%);
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(3, 4, 3, 0.6) 100%);
 }
 
-/* Gate */
+/* Secret unlock trigger — visually just part of the ambient glow */
 
-.gate {
+.secret-orb {
+  position: fixed;
+  top: -6vw;
+  left: -6vw;
+  width: 26vw;
+  height: 26vw;
+  min-width: 200px;
+  min-height: 200px;
+  max-width: 340px;
+  max-height: 340px;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Profile / link-in-bio page */
+
+.profile {
   position: fixed;
   inset: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: 18px;
+  padding: 60px 24px;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.gate-mark {
-  text-align: center;
+.profile .avatar,
+.profile .profile-name,
+.profile .link-list {
+  pointer-events: auto;
 }
 
-.gate-name {
+.avatar {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+  box-shadow: 0 0 0 6px rgba(63, 224, 102, 0.06), 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.profile-name {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 500;
-  font-size: 30px;
-  letter-spacing: 0.01em;
-  color: #f6efe0;
-}
-
-.gate-sub {
-  margin: 8px 0 0;
-  font-size: 12px;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  font-size: 26px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(242, 237, 226, 0.4);
+  color: var(--text);
 }
 
-.panel {
+.link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(360px, 88vw);
+  margin-top: 8px;
+}
+
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.link-btn:hover {
+  border-color: var(--brand, var(--green));
+  background: var(--bg-panel-raised);
+  transform: translateY(-2px);
+}
+
+.link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--brand, var(--green));
+  flex-shrink: 0;
+}
+
+.link-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.link-name {
+  text-transform: uppercase;
+}
+
+/* Gate / unlock panel */
+
+.panel,
+.unlock-panel {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -76,42 +168,46 @@ html, body {
   gap: 16px;
   padding: 36px 42px;
   width: min(340px, 86vw);
-  background: rgba(255, 250, 240, 0.03);
-  border: 1px solid rgba(255, 250, 240, 0.1);
-  border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-  transition: border-color 0.3s ease, transform 0.15s ease;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 }
 
-.panel:focus-within {
-  border-color: rgba(216, 158, 92, 0.4);
+.panel:focus-within,
+.unlock-panel:focus-within {
+  border-color: var(--green-dim);
 }
 
-#password {
+#password,
+#unlock-password {
   width: 100%;
   text-align: center;
   padding: 10px 4px;
   font-family: inherit;
   font-size: 17px;
   letter-spacing: 0.28em;
-  color: #f6efe0;
+  color: var(--text);
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 250, 240, 0.18);
+  border-bottom: 1px solid var(--border);
   outline: none;
   transition: border-color 0.25s ease;
 }
 
-#password::placeholder {
+#password::placeholder,
+#unlock-password::placeholder {
   letter-spacing: normal;
-  color: rgba(242, 237, 226, 0.28);
+  color: var(--text-faint);
 }
 
-#password:focus {
-  border-color: rgba(216, 158, 92, 0.65);
+#password:focus,
+#unlock-password:focus {
+  border-color: var(--green);
 }
 
-.panel button {
+.panel button,
+.unlock-panel button {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -122,22 +218,20 @@ html, body {
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(242, 237, 226, 0.55);
+  color: var(--text-dim);
   cursor: pointer;
   transition: color 0.2s ease, gap 0.2s ease;
 }
 
-.panel button:hover {
-  color: #f6efe0;
+.panel button:hover,
+.unlock-panel button:hover {
+  color: var(--green);
   gap: 10px;
 }
 
-.panel button:active {
+.panel button:active,
+.unlock-panel button:active {
   transform: scale(0.98);
-}
-
-.panel button svg {
-  flex-shrink: 0;
 }
 
 .gate-message {
@@ -145,7 +239,7 @@ html, body {
   margin: -4px 0 0;
   font-size: 11px;
   letter-spacing: 0.1em;
-  color: rgba(214, 110, 100, 0.85);
+  color: var(--danger);
   text-transform: uppercase;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -156,10 +250,11 @@ html, body {
 }
 
 .gate-message.granted {
-  color: rgba(129, 201, 149, 0.9);
+  color: var(--green);
 }
 
-.panel.shake {
+.panel.shake,
+.unlock-panel.shake {
   animation: shake 0.4s ease;
 }
 
@@ -190,16 +285,17 @@ html, body {
 
 .dashboard-title {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 500;
-  font-size: 32px;
-  color: #f6efe0;
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
 }
 
 .dashboard-sub {
   margin: 10px 0 0;
   font-size: 13px;
-  color: rgba(242, 237, 226, 0.45);
+  color: var(--text-dim);
 }
 
 .project-grid {
@@ -210,25 +306,25 @@ html, body {
 }
 
 .project-card {
-  --accent: 216, 158, 92;
+  --accent: 63, 224, 102;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
   gap: 12px;
   padding: 24px;
-  background: rgba(255, 250, 240, 0.025);
-  border: 1px solid rgba(255, 250, 240, 0.08);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
-  color: #f2ede2;
+  color: var(--text);
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.25s ease, background 0.25s ease, transform 0.15s ease;
 }
 
 .project-card:hover {
-  border-color: rgba(var(--accent), 0.45);
-  background: rgba(255, 250, 240, 0.045);
+  border-color: rgba(var(--accent), 0.55);
+  background: var(--bg-panel-raised);
   transform: translateY(-2px);
 }
 
@@ -246,13 +342,14 @@ html, body {
 .project-name {
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .project-tagline {
   margin-top: -6px;
   font-size: 12.5px;
-  color: rgba(242, 237, 226, 0.5);
+  color: var(--text-dim);
   line-height: 1.55;
 }
 
@@ -264,7 +361,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 9, 7, 0.7);
+  background: rgba(3, 4, 3, 0.7);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -277,7 +374,7 @@ html, body {
 }
 
 .modal-panel {
-  --accent: 216, 158, 92;
+  --accent: 63, 224, 102;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -285,12 +382,24 @@ html, body {
   gap: 12px;
   width: min(360px, 86vw);
   padding: 40px 34px;
-  background: #17150f;
-  border: 1px solid rgba(255, 250, 240, 0.1);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
   transform: translateY(10px) scale(0.98);
   transition: transform 0.25s ease;
+}
+
+.unlock-panel {
+  align-items: center;
+}
+
+#unlock-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
 }
 
 .modal-overlay.open .modal-panel {
@@ -303,14 +412,14 @@ html, body {
   right: 16px;
   background: none;
   border: none;
-  color: rgba(242, 237, 226, 0.4);
+  color: var(--text-faint);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
 }
 
 .modal-close:hover {
-  color: #f6efe0;
+  color: var(--text);
 }
 
 .modal-icon {
@@ -326,17 +435,18 @@ html, body {
 
 .modal-title {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 500;
-  font-size: 20px;
-  color: #f6efe0;
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text);
 }
 
 .modal-tagline {
   margin: -6px 0 6px;
   font-size: 13px;
   text-align: left;
-  color: rgba(242, 237, 226, 0.5);
+  color: var(--text-dim);
   line-height: 1.55;
 }
 
@@ -352,24 +462,25 @@ html, body {
   padding: 10px 14px;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  color: #f2ede2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text);
   text-decoration: none;
-  border: 1px solid rgba(255, 250, 240, 0.14);
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: transparent;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .modal-link:hover {
-  border-color: rgba(255, 250, 240, 0.3);
-  background: rgba(255, 250, 240, 0.05);
+  border-color: var(--text-dim);
+  background: var(--bg-panel-raised);
 }
 
 .modal-link.primary {
   background: rgba(var(--accent), 0.9);
   border-color: rgba(var(--accent), 0.9);
-  color: #17150f;
+  color: #04150a;
 }
 
 .modal-link.primary:hover {

@@ -1,8 +1,47 @@
-const form = document.getElementById('gate-form');
-const panel = document.querySelector('.panel');
-const input = document.getElementById('password');
-const message = document.getElementById('gate-message');
-const submitBtn = form.querySelector('button');
+const linkList = document.getElementById('link-list');
+
+LINKS.forEach((link) => {
+  const a = document.createElement('a');
+  a.className = 'link-btn';
+  a.href = link.url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.style.setProperty('--brand', link.color);
+  a.innerHTML = `
+    <span class="link-icon">${link.icon}</span>
+    <span class="link-name">${link.name}</span>
+  `;
+  linkList.appendChild(a);
+});
+
+const trigger = document.getElementById('secret-trigger');
+const modal = document.getElementById('unlock-modal');
+const panel = document.querySelector('.unlock-panel');
+const form = document.getElementById('unlock-form');
+const input = document.getElementById('unlock-password');
+const message = document.getElementById('unlock-message');
+const closeBtn = document.getElementById('unlock-close');
+const submitBtn = form.querySelector('button[type="submit"]');
+
+function openModal() {
+  modal.classList.add('open');
+  message.classList.remove('show', 'granted');
+  input.value = '';
+  setTimeout(() => input.focus(), 60);
+}
+
+function closeModal() {
+  modal.classList.remove('open');
+}
+
+trigger.addEventListener('click', openModal);
+closeBtn.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+});
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -22,7 +61,7 @@ form.addEventListener('submit', async (e) => {
     message.classList.add('show', 'granted');
     setTimeout(() => {
       window.location.href = 'home.html';
-    }, 700);
+    }, 600);
   } catch {
     message.textContent = 'ACCESS DENIED';
     message.classList.remove('granted');

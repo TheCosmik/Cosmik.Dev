@@ -19,9 +19,8 @@ resize();
 window.addEventListener('resize', resize);
 
 const blobs = [
-  { x: 0.28, y: 0.32, r: 0.42, hue: [216, 158, 92], alpha: 0.16, speed: 0.00011, phase: 0 },
-  { x: 0.72, y: 0.62, r: 0.5, hue: [90, 110, 130], alpha: 0.14, speed: 0.00008, phase: 2.1 },
-  { x: 0.5, y: 0.85, r: 0.36, hue: [140, 90, 80], alpha: 0.1, speed: 0.00013, phase: 4.4 }
+  { x: 0.14, y: -0.02, r: 0.4, hue: [63, 224, 102], alpha: 0.12, speed: 0.0001, phase: 0 },
+  { x: 0.88, y: 1.02, r: 0.44, hue: [63, 224, 102], alpha: 0.09, speed: 0.00009, phase: 2.4 }
 ];
 
 let mouseX = 0, mouseY = 0;
@@ -45,15 +44,15 @@ function draw() {
   smoothY += (mouseY - smoothY) * 0.03;
 
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = '#0f0e0c';
+  ctx.fillStyle = '#07090a';
   ctx.fillRect(0, 0, width, height);
 
   const diag = Math.hypot(width, height);
 
   for (const b of blobs) {
     const drift = t * b.speed + b.phase;
-    const px = width * b.x + Math.cos(drift) * width * 0.06 + smoothX * 18;
-    const py = height * b.y + Math.sin(drift * 0.8) * height * 0.06 + smoothY * 18;
+    const px = width * b.x + Math.cos(drift) * width * 0.05 + smoothX * 16;
+    const py = height * b.y + Math.sin(drift * 0.8) * height * 0.05 + smoothY * 16;
     const radius = diag * b.r;
 
     const glow = ctx.createRadialGradient(px, py, 0, px, py, radius);
