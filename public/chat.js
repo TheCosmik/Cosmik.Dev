@@ -7,9 +7,29 @@ const connectionsEl = document.getElementById('chat-connections');
 const bannerEl = document.getElementById('chat-banner');
 const feedEl = document.getElementById('chat-feed');
 const menuEl = document.getElementById('mod-menu');
+const sizeSlider = document.getElementById('chat-size');
 
 let knownIds = new Set();
 let selected = null;
+
+try {
+  const savedSize = localStorage.getItem('chat-font-size');
+  if (savedSize) {
+    sizeSlider.value = savedSize;
+    document.documentElement.style.setProperty('--chat-font-size', `${savedSize}px`);
+  }
+} catch {
+  // localStorage unavailable — slider still works, just won't persist
+}
+
+sizeSlider.addEventListener('input', () => {
+  document.documentElement.style.setProperty('--chat-font-size', `${sizeSlider.value}px`);
+  try {
+    localStorage.setItem('chat-font-size', sizeSlider.value);
+  } catch {
+    // ignore
+  }
+});
 
 const params = new URLSearchParams(location.search);
 if (params.get('connected')) {

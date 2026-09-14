@@ -28,7 +28,14 @@
       <p class="dashboard-sub">Kick + Twitch, merged.</p>
     </div>
 
-    <div id="chat-connections" class="chat-connections"></div>
+    <div class="chat-toolbar">
+      <div id="chat-connections" class="chat-connections"></div>
+      <div class="chat-size-control">
+        <span class="chat-size-label chat-size-label-sm">A</span>
+        <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
+        <span class="chat-size-label chat-size-label-lg">A</span>
+      </div>
+    </div>
     <p id="chat-banner" class="chat-banner"></p>
 
     <div id="chat-feed" class="chat-feed"></div>
