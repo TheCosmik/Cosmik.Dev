@@ -157,6 +157,34 @@ html, body {
   text-transform: uppercase;
 }
 
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #ff5c45;
+  border: 1px solid rgba(255, 92, 69, 0.4);
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff5c45;
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 /* Gate / unlock panel */
 
 .panel,
@@ -379,6 +407,16 @@ html, body {
   font-size: 12.5px;
   color: var(--text-dim);
   line-height: 1.55;
+}
+
+.project-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.03em;
 }
 
 /* Modal */

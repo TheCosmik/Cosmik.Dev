@@ -1,4 +1,5 @@
 const linkList = document.getElementById('link-list');
+const linkElements = {};
 
 LINKS.forEach((link) => {
   const a = document.createElement('a');
@@ -12,7 +13,24 @@ LINKS.forEach((link) => {
     <span class="link-name">${link.name}</span>
   `;
   linkList.appendChild(a);
+  linkElements[link.name.toLowerCase()] = a;
 });
+
+fetch('/api/status')
+  .then((res) => (res.ok ? res.json() : null))
+  .then((status) => {
+    if (!status) return;
+    Object.entries(status).forEach(([platform, isLive]) => {
+      const el = linkElements[platform];
+      if (el && isLive) {
+        const badge = document.createElement('span');
+        badge.className = 'live-badge';
+        badge.innerHTML = '<span class="live-dot"></span>LIVE';
+        el.appendChild(badge);
+      }
+    });
+  })
+  .catch(() => {});
 
 const trigger = document.getElementById('secret-trigger');
 const modal = document.getElementById('unlock-modal');

@@ -8,6 +8,24 @@ const modalRepo = document.getElementById('modal-repo');
 const modalClose = document.getElementById('modal-close');
 const modalPanel = document.querySelector('.modal-panel');
 
+function repoPathFromUrl(url) {
+  try {
+    return new URL(url).pathname.replace(/^\/|\/$/g, '');
+  } catch {
+    return null;
+  }
+}
+
+function relativeTime(iso) {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days < 1) return 'today';
+  if (days === 1) return '1d ago';
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
 PROJECTS.forEach((project) => {
   const card = document.createElement('button');
   card.className = 'project-card';
@@ -16,9 +34,24 @@ PROJECTS.forEach((project) => {
     <span class="project-icon">${project.icon}</span>
     <span class="project-name">${project.name}</span>
     <span class="project-tagline">${project.tagline}</span>
+    <span class="project-stats" data-stats></span>
   `;
   card.addEventListener('click', () => openModal(project));
   grid.appendChild(card);
+
+  const repo = repoPathFromUrl(project.repoUrl);
+  if (repo) {
+    fetch(`/api/repo-stats?repo=${encodeURIComponent(repo)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || data.error) return;
+        card.querySelector('[data-stats]').innerHTML = `
+          <span>★ ${data.stars}</span>
+          <span>updated ${relativeTime(data.updatedAt)}</span>
+        `;
+      })
+      .catch(() => {});
+  }
 });
 
 function openModal(project) {
