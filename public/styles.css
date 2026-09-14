@@ -64,7 +64,7 @@ html, body {
   max-width: 340px;
   max-height: 340px;
   border-radius: 50%;
-  z-index: 1;
+  z-index: 5;
 }
 
 /* Profile / link-in-bio page */
@@ -80,13 +80,6 @@ html, body {
   gap: 18px;
   padding: 60px 24px;
   z-index: 2;
-  pointer-events: none;
-}
-
-.profile .avatar,
-.profile .profile-name,
-.profile .link-list {
-  pointer-events: auto;
 }
 
 .avatar {
@@ -343,12 +336,16 @@ html, body {
 
 .back-link {
   position: fixed;
-  top: 28px;
-  left: 28px;
+  top: 20px;
+  left: 20px;
   z-index: 3;
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -371,12 +368,6 @@ html, body {
   flex-direction: column;
   align-items: center;
   padding: 96px 24px 60px;
-  pointer-events: none;
-}
-
-.dashboard .dashboard-header,
-.dashboard .project-grid {
-  pointer-events: auto;
 }
 
 .dashboard-header {
@@ -457,7 +448,6 @@ html, body {
 .click-stats {
   width: min(880px, 100%);
   margin-top: 40px;
-  pointer-events: auto;
 }
 
 .click-stats-title {
