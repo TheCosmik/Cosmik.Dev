@@ -6,6 +6,7 @@ const modalTagline = document.getElementById('modal-tagline');
 const modalLive = document.getElementById('modal-live');
 const modalRepo = document.getElementById('modal-repo');
 const modalClose = document.getElementById('modal-close');
+const modalPanel = document.querySelector('.modal-panel');
 
 PROJECTS.forEach((project) => {
   const card = document.createElement('button');
@@ -21,6 +22,7 @@ PROJECTS.forEach((project) => {
 });
 
 function openModal(project) {
+  modalPanel.style.setProperty('--accent', `${project.accent[0]}, ${project.accent[1]}, ${project.accent[2]}`);
   modalIcon.textContent = project.icon;
   modalTitle.textContent = project.name;
   modalTagline.textContent = project.tagline;

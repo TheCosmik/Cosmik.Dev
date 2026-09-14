@@ -1,0 +1,14 @@
+name = "cosmikdev"
+main = "worker/index.js"
+compatibility_date = "2026-09-13"
+workers_dev = true
+
+routes = [
+  { pattern = "cosmik.dev", custom_domain = true },
+  { pattern = "www.cosmik.dev", custom_domain = true }
+]
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true

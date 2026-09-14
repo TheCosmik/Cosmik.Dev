@@ -1,0 +1,14 @@
+{
+  "name": "cosmikdev",
+  "version": "1.0.0",
+  "description": "Cosmik.Dev — personal project dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.131.1"
+  }
+}

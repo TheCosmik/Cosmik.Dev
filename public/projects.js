@@ -22,5 +22,13 @@ const PROJECTS = [
     accent: [200, 130, 255],
     liveUrl: 'https://sprite-tracker-eight.vercel.app/',
     repoUrl: 'https://github.com/TheCosmik/SpriteTracker'
+  },
+  {
+    name: 'Green World Customs',
+    tagline: 'Shop portal for repairs, lockpick sales & weekly payroll',
+    icon: '\u{1F527}',
+    accent: [110, 210, 140],
+    liveUrl: 'https://greenworldcustoms.net',
+    repoUrl: 'https://github.com/TheCosmik/green-world-customs'
   }
 ];
