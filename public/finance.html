@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmik — Finances</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07090a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <a href="/" class="back-link">
+    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 12H5M11 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Exit
+  </a>
+
+  <nav class="page-tabs">
+    <a href="/home.html" class="page-tab">Home</a>
+    <a href="/chat.html" class="page-tab">Live Chat</a>
+    <a href="/finance.html" class="page-tab is-active">Finances</a>
+  </nav>
+
+  <main class="financepage">
+    <div class="financepage-header">
+      <h1 class="dashboard-title">Finances</h1>
+      <p class="dashboard-sub">Track subscriptions and what they cost you.</p>
+    </div>
+
+    <div class="finance-summary">
+      <span class="finance-summary-label">Monthly Total</span>
+      <span id="finance-total" class="finance-summary-value">$0.00</span>
+    </div>
+
+    <div class="finance-toolbar">
+      <button id="finance-add-btn" class="finance-add-btn">+ Add Subscription</button>
+    </div>
+
+    <div id="finance-list" class="finance-list"></div>
+  </main>
+
+  <div id="finance-modal" class="modal-overlay">
+    <div class="modal-panel">
+      <button id="finance-modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="finance-modal-title" class="modal-title">Add Subscription</h2>
+      <form id="finance-form" class="finance-form">
+        <label class="finance-field">
+          <span>Name</span>
+          <input type="text" id="finance-name" maxlength="80" required placeholder="Netflix">
+        </label>
+        <label class="finance-field">
+          <span>Amount ($)</span>
+          <input type="number" id="finance-amount" min="0" step="0.01" required placeholder="15.49">
+        </label>
+        <label class="finance-field">
+          <span>Charge day of month</span>
+          <input type="number" id="finance-day" min="1" max="31" required placeholder="5">
+        </label>
+        <p id="finance-form-error" class="finance-form-error"></p>
+        <div class="modal-links">
+          <button type="submit" class="modal-link primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="background.js"></script>
+  <script src="finance.js"></script>
+</body>
+</html>

@@ -15,8 +15,15 @@ import {
   handleTwitchSocketStatus,
   handleChatSocket
 } from './chat.js';
+import {
+  handleFinanceList,
+  handleFinanceAdd,
+  handleFinanceUpdate,
+  handleFinanceDelete
+} from './finance.js';
 export { TwitchChatSocket } from './twitch-socket.js';
 export { ChatRoom } from './chat-room.js';
+export { FinanceStore } from './finance-store.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
@@ -295,7 +302,23 @@ export default {
       return handleChatSocket(request, env);
     }
 
-    if (url.pathname === '/home.html' || url.pathname === '/chat.html') {
+    if (url.pathname === '/api/finance/list') {
+      return handleFinanceList(request, env);
+    }
+
+    if (url.pathname === '/api/finance/add') {
+      return handleFinanceAdd(request, env);
+    }
+
+    if (url.pathname === '/api/finance/update') {
+      return handleFinanceUpdate(request, env);
+    }
+
+    if (url.pathname === '/api/finance/delete') {
+      return handleFinanceDelete(request, env);
+    }
+
+    if (url.pathname === '/home.html' || url.pathname === '/chat.html' || url.pathname === '/finance.html') {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));

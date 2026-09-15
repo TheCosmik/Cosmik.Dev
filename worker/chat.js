@@ -1,4 +1,4 @@
-import { getCookieValue, verifySessionToken } from '../lib/verify-session.js';
+import { getCookieValue, requireSession } from '../lib/verify-session.js';
 
 const REDIRECT_BASE = 'https://cosmik.dev';
 
@@ -20,12 +20,6 @@ function json(data, status = 200, headers = {}) {
     status,
     headers: { 'Content-Type': 'application/json', ...headers }
   });
-}
-
-async function requireSession(request, env) {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const token = getCookieValue(cookieHeader, 'site_auth');
-  return Boolean(env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET)));
 }
 
 function randomString(length) {

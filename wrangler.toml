@@ -26,6 +26,10 @@ class_name = "TwitchChatSocket"
 name = "CHAT_ROOM"
 class_name = "ChatRoom"
 
+[[durable_objects.bindings]]
+name = "FINANCE_STORE"
+class_name = "FinanceStore"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["TwitchChatSocket"]
@@ -33,6 +37,10 @@ new_sqlite_classes = ["TwitchChatSocket"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["ChatRoom"]
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["FinanceStore"]
 
 [triggers]
 crons = ["*/5 * * * *"]
