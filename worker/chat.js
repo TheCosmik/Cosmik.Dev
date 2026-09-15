@@ -3,7 +3,7 @@ import { getCookieValue, verifySessionToken } from '../lib/verify-session.js';
 const REDIRECT_BASE = 'https://cosmik.dev';
 const MAX_MESSAGES = 200;
 
-const TWITCH_SCOPES = 'user:read:chat moderator:manage:banned_users moderator:manage:chat_messages';
+const TWITCH_SCOPES = 'user:read:chat user:bot channel:bot moderator:manage:banned_users moderator:manage:chat_messages';
 const KICK_SCOPES = 'user:read events:subscribe moderation:ban moderation:chat_message:manage';
 
 const KICK_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
@@ -159,11 +159,27 @@ async function twitchGetSelf(env, accessToken) {
   return data.data[0];
 }
 
-async function twitchSubscribeChat(env, accessToken, userId) {
+async function twitchAppAccessToken(env) {
+  const res = await fetch('https://id.twitch.tv/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: env.TWITCH_CLIENT_ID,
+      client_secret: env.TWITCH_CLIENT_SECRET,
+      grant_type: 'client_credentials'
+    })
+  });
+  if (!res.ok) throw new Error(`twitch app token failed: ${res.status}`);
+  const data = await res.json();
+  return data.access_token;
+}
+
+async function twitchSubscribeChat(env, userId) {
+  const appToken = await twitchAppAccessToken(env);
   const res = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${appToken}`,
       'Client-Id': env.TWITCH_CLIENT_ID,
       'Content-Type': 'application/json'
     },
@@ -407,7 +423,13 @@ export async function handleAuthCallback(request, env, platform) {
         login: self.login,
         display_name: self.display_name
       });
-      await twitchSubscribeChat(env, tokenData.access_token, self.id);
+      const sub = await twitchSubscribeChat(env, self.id);
+      if (!sub.ok) {
+        return Response.redirect(
+          `${REDIRECT_BASE}/chat.html?error=${encodeURIComponent('twitch subscribe failed: ' + JSON.stringify(sub.data))}`,
+          302
+        );
+      }
     } else {
       const verifier = getCookieValue(cookieHeader, 'oauth_verifier');
       const tokenData = await kickExchangeCode(env, code, verifier);
@@ -419,7 +441,13 @@ export async function handleAuthCallback(request, env, platform) {
         user_id: self.user_id,
         name: self.name
       });
-      await kickSubscribeChat(tokenData.access_token);
+      const sub = await kickSubscribeChat(tokenData.access_token);
+      if (!sub.ok) {
+        return Response.redirect(
+          `${REDIRECT_BASE}/chat.html?error=${encodeURIComponent('kick subscribe failed: ' + JSON.stringify(sub.data))}`,
+          302
+        );
+      }
     }
   } catch (err) {
     return Response.redirect(`${REDIRECT_BASE}/chat.html?error=${encodeURIComponent(String(err.message || err))}`, 302);
@@ -458,7 +486,7 @@ export async function handleTwitchWebhook(request, env, ctx) {
     );
   }
 
-  return new Response('', { status: 204 });
+  return new Response(null, { status: 204 });
 }
 
 export async function handleKickWebhook(request, env, ctx) {
@@ -485,7 +513,7 @@ export async function handleKickWebhook(request, env, ctx) {
     );
   }
 
-  return new Response('', { status: 204 });
+  return new Response(null, { status: 204 });
 }
 
 export async function handleChatRecent(request, env) {
