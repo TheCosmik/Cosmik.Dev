@@ -1,9 +1,8 @@
 import { getCookieValue, verifySessionToken } from '../lib/verify-session.js';
 
 const REDIRECT_BASE = 'https://cosmik.dev';
-const MAX_MESSAGES = 200;
 
-const TWITCH_SCOPES = 'user:read:chat user:bot channel:bot moderator:manage:banned_users moderator:manage:chat_messages';
+const TWITCH_SCOPES = 'user:read:chat moderator:manage:banned_users moderator:manage:chat_messages';
 const KICK_SCOPES = 'user:read events:subscribe moderation:ban moderation:chat_message:manage';
 
 const KICK_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
@@ -82,7 +81,7 @@ function getKickPublicKey() {
   return kickPublicKeyPromise;
 }
 
-// ---------- KV storage ----------
+// ---------- storage (oauth tokens in KV, chat log in the ChatRoom Durable Object) ----------
 
 async function getToken(env, platform) {
   const raw = await env.COSMIK_KV.get(`oauth:${platform}`);
@@ -93,17 +92,22 @@ async function saveToken(env, platform, data) {
   await env.COSMIK_KV.put(`oauth:${platform}`, JSON.stringify(data));
 }
 
+function getChatRoom(env) {
+  const id = env.CHAT_ROOM.idFromName('main');
+  return env.CHAT_ROOM.get(id);
+}
+
 async function appendMessage(env, message) {
-  const raw = await env.COSMIK_KV.get('chat:messages');
-  const list = raw ? JSON.parse(raw) : [];
-  list.push(message);
-  while (list.length > MAX_MESSAGES) list.shift();
-  await env.COSMIK_KV.put('chat:messages', JSON.stringify(list));
+  await getChatRoom(env).fetch('https://chat-room.internal/append', {
+    method: 'POST',
+    body: JSON.stringify(message)
+  });
 }
 
 async function getRecentMessages(env) {
-  const raw = await env.COSMIK_KV.get('chat:messages');
-  return raw ? JSON.parse(raw) : [];
+  const res = await getChatRoom(env).fetch('https://chat-room.internal/recent');
+  const data = await res.json();
+  return data.messages;
 }
 
 // ---------- Twitch ----------
@@ -159,43 +163,12 @@ async function twitchGetSelf(env, accessToken) {
   return data.data[0];
 }
 
-async function twitchAppAccessToken(env) {
-  const res = await fetch('https://id.twitch.tv/oauth2/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: env.TWITCH_CLIENT_ID,
-      client_secret: env.TWITCH_CLIENT_SECRET,
-      grant_type: 'client_credentials'
-    })
-  });
-  if (!res.ok) throw new Error(`twitch app token failed: ${res.status}`);
-  const data = await res.json();
-  return data.access_token;
-}
-
-async function twitchSubscribeChat(env, userId) {
-  const appToken = await twitchAppAccessToken(env);
-  const res = await fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${appToken}`,
-      'Client-Id': env.TWITCH_CLIENT_ID,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      type: 'channel.chat.message',
-      version: '1',
-      condition: { broadcaster_user_id: userId, user_id: userId },
-      transport: {
-        method: 'webhook',
-        callback: `${REDIRECT_BASE}/api/webhooks/twitch`,
-        secret: env.TWITCH_EVENTSUB_SECRET
-      }
-    })
-  });
+async function pingTwitchSocket(env) {
+  if (!env.TWITCH_SOCKET) return { ok: false, error: 'TWITCH_SOCKET binding missing' };
+  const id = env.TWITCH_SOCKET.idFromName('main');
+  const res = await env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/');
   const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
+  return { ok: res.ok, data };
 }
 
 async function twitchValidAccessToken(env) {
@@ -423,10 +396,10 @@ export async function handleAuthCallback(request, env, platform) {
         login: self.login,
         display_name: self.display_name
       });
-      const sub = await twitchSubscribeChat(env, self.id);
+      const sub = await pingTwitchSocket(env);
       if (!sub.ok) {
         return Response.redirect(
-          `${REDIRECT_BASE}/chat.html?error=${encodeURIComponent('twitch subscribe failed: ' + JSON.stringify(sub.data))}`,
+          `${REDIRECT_BASE}/chat.html?error=${encodeURIComponent('twitch socket connect failed: ' + JSON.stringify(sub.data))}`,
           302
         );
       }
@@ -456,6 +429,13 @@ export async function handleAuthCallback(request, env, platform) {
   return Response.redirect(`${REDIRECT_BASE}/chat.html?connected=${platform}`, 302);
 }
 
+function buildTwitchContent(message) {
+  if (!message.fragments || message.fragments.length === 0) return message.text;
+  return message.fragments
+    .map((f) => (f.type === 'emote' && f.emote ? `[emote:${f.emote.id}:${f.text}]` : f.text))
+    .join('');
+}
+
 export async function handleTwitchWebhook(request, env, ctx) {
   const rawBody = await request.text();
   const messageType = request.headers.get('Twitch-Eventsub-Message-Type');
@@ -480,7 +460,7 @@ export async function handleTwitchWebhook(request, env, ctx) {
         displayName: e.chatter_user_name,
         userId: e.chatter_user_id,
         color: e.color || null,
-        content: e.message.text,
+        content: buildTwitchContent(e.message),
         timestamp: new Date().toISOString()
       })
     );
@@ -522,13 +502,60 @@ export async function handleChatRecent(request, env) {
   return json({ messages });
 }
 
+export async function handleChatSocket(request, env) {
+  if (!(await requireSession(request, env))) return new Response('unauthorized', { status: 401 });
+  if (!env.CHAT_ROOM) return new Response('not configured', { status: 500 });
+  return getChatRoom(env).fetch(request);
+}
+
+async function getTwitchViewers(env, accessToken) {
+  try {
+    const res = await fetch('https://api.twitch.tv/helix/streams?user_login=C0smiik', {
+      headers: { 'Client-Id': env.TWITCH_CLIENT_ID, Authorization: `Bearer ${accessToken}` }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.data && data.data[0] ? data.data[0].viewer_count : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getKickViewers() {
+  try {
+    const res = await fetch('https://kick.com/api/v2/channels/cosmik', {
+      headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.livestream ? data.livestream.viewer_count : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function handleChatStatus(request, env) {
   if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
   const [twitch, kick] = await Promise.all([getToken(env, 'twitch'), getToken(env, 'kick')]);
+  const [twitchViewers, kickViewers] = await Promise.all([
+    twitch ? getTwitchViewers(env, twitch.access_token) : null,
+    kick ? getKickViewers() : null
+  ]);
+
   return json({
-    twitch: twitch ? { connected: true, login: twitch.login } : { connected: false },
-    kick: kick ? { connected: true, name: kick.name } : { connected: false }
+    twitch: twitch ? { connected: true, login: twitch.login, viewers: twitchViewers } : { connected: false },
+    kick: kick ? { connected: true, name: kick.name, viewers: kickViewers } : { connected: false }
   });
+}
+
+export async function handleTwitchSocketStatus(request, env) {
+  if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
+  if (!env.TWITCH_SOCKET) return json({ error: 'TWITCH_SOCKET binding missing' }, 500);
+
+  const id = env.TWITCH_SOCKET.idFromName('main');
+  await env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/');
+  const res = await env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/status');
+  return json(await res.json());
 }
 
 export async function handleChatModerate(request, env) {

@@ -11,8 +11,12 @@ import {
   handleKickWebhook,
   handleChatRecent,
   handleChatStatus,
-  handleChatModerate
+  handleChatModerate,
+  handleTwitchSocketStatus,
+  handleChatSocket
 } from './chat.js';
+export { TwitchChatSocket } from './twitch-socket.js';
+export { ChatRoom } from './chat-room.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
@@ -283,6 +287,14 @@ export default {
       return handleChatModerate(request, env);
     }
 
+    if (url.pathname === '/api/chat/twitch-socket-status') {
+      return handleTwitchSocketStatus(request, env);
+    }
+
+    if (url.pathname === '/api/chat/socket') {
+      return handleChatSocket(request, env);
+    }
+
     if (url.pathname === '/home.html' || url.pathname === '/chat.html') {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
@@ -293,5 +305,11 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  async scheduled(event, env, ctx) {
+    if (!env.TWITCH_SOCKET) return;
+    const id = env.TWITCH_SOCKET.idFromName('main');
+    ctx.waitUntil(env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/'));
   }
 };

@@ -3,6 +3,11 @@ const PLATFORM_ICONS = {
   twitch: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>'
 };
 
+const CHANNEL_URLS = {
+  kick: 'https://kick.com/cosmik',
+  twitch: 'https://twitch.tv/C0smiik'
+};
+
 const connectionsEl = document.getElementById('chat-connections');
 const bannerEl = document.getElementById('chat-banner');
 const feedEl = document.getElementById('chat-feed');
@@ -49,10 +54,16 @@ function renderConnections(status) {
     const pill = document.createElement('div');
     pill.className = 'chat-connection';
     if (info.connected) {
+      const viewers = info.viewers != null
+        ? `<span class="chat-connection-viewers">${info.viewers.toLocaleString()} viewers</span>`
+        : '';
       pill.innerHTML = `
-        <span class="chat-connection-icon">${PLATFORM_ICONS[platform]}</span>
-        <span>${platform === 'twitch' ? info.login : info.name}</span>
-        <span class="chat-connection-dot"></span>
+        <a class="chat-connection-link" href="${CHANNEL_URLS[platform]}" target="_blank" rel="noopener">
+          <span class="chat-connection-icon">${PLATFORM_ICONS[platform]}</span>
+          <span>${platform === 'twitch' ? info.login : info.name}</span>
+          ${viewers}
+          <span class="chat-connection-dot"></span>
+        </a>
       `;
     } else {
       pill.innerHTML = `
@@ -64,6 +75,33 @@ function renderConnections(status) {
   }
 }
 
+const EMOTE_CDN = {
+  twitch: (id) => `https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/2.0`,
+  kick: (id) => `https://files.kick.com/emotes/${id}/original`
+};
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function renderContent(msg) {
+  const cdn = EMOTE_CDN[msg.platform];
+  const parts = String(msg.content).split(/(\[emote:\d+:[^\]]*\])/g);
+  return parts
+    .map((part) => {
+      const match = part.match(/^\[emote:(\d+):([^\]]*)\]$/);
+      if (match && cdn) {
+        const [, id, name] = match;
+        const safeName = escapeHtml(name);
+        return `<img class="chat-emote" src="${cdn(id)}" alt="${safeName}" title="${safeName}" loading="lazy">`;
+      }
+      return escapeHtml(part);
+    })
+    .join('');
+}
+
 function renderMessage(msg) {
   const row = document.createElement('div');
   row.className = 'chat-row';
@@ -71,11 +109,11 @@ function renderMessage(msg) {
   row.dataset.userId = msg.userId;
   row.dataset.messageId = msg.id;
 
-  const nameStyle = msg.color ? `style="color:${msg.color}"` : '';
+  const nameStyle = msg.color ? `style="color:${escapeHtml(msg.color)}"` : '';
   row.innerHTML = `
     <span class="chat-platform-icon chat-platform-${msg.platform}">${PLATFORM_ICONS[msg.platform]}</span>
-    <span class="chat-username" ${nameStyle}>${msg.displayName || msg.username}</span>
-    <span class="chat-content">${msg.content}</span>
+    <span class="chat-username" ${nameStyle}>${escapeHtml(msg.displayName || msg.username)}</span>
+    <span class="chat-content">${renderContent(msg)}</span>
   `;
 
   row.querySelector('.chat-username').addEventListener('click', (e) => openMenu(e, msg));
@@ -125,23 +163,39 @@ menuEl.querySelectorAll('button').forEach((btn) => {
   });
 });
 
-async function pollMessages() {
-  try {
-    const res = await fetch('/api/chat/recent');
-    if (!res.ok) return;
-    const { messages } = await res.json();
-    const nearBottom = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight < 80;
+function addMessages(messages) {
+  const nearBottom = feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight < 80;
 
-    for (const msg of messages) {
-      if (knownIds.has(msg.id)) continue;
-      knownIds.add(msg.id);
-      feedEl.appendChild(renderMessage(msg));
-    }
-
-    if (nearBottom) feedEl.scrollTop = feedEl.scrollHeight;
-  } catch {
-    // ignore transient network errors
+  for (const msg of messages) {
+    if (knownIds.has(msg.id)) continue;
+    knownIds.add(msg.id);
+    feedEl.appendChild(renderMessage(msg));
   }
+
+  if (nearBottom) feedEl.scrollTop = feedEl.scrollHeight;
+}
+
+let chatSocket = null;
+let reconnectTimer = null;
+
+function connectChatSocket() {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  chatSocket = new WebSocket(`${protocol}//${location.host}/api/chat/socket`);
+
+  chatSocket.addEventListener('message', (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'history') addMessages(data.messages);
+    else if (data.type === 'message') addMessages([data.message]);
+  });
+
+  chatSocket.addEventListener('close', () => {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(connectChatSocket, 2000);
+  });
+
+  chatSocket.addEventListener('error', () => {
+    chatSocket.close();
+  });
 }
 
 async function pollStatus() {
@@ -155,6 +209,5 @@ async function pollStatus() {
 }
 
 pollStatus();
-pollMessages();
-setInterval(pollMessages, 2000);
+connectChatSocket();
 setInterval(pollStatus, 15000);

@@ -604,22 +604,41 @@ html, body {
 .chat-connection {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
   background: var(--bg-panel);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
   font-size: 13px;
   color: var(--text-dim);
+  transition: border-color 0.2s ease;
 }
 
-.chat-connection a {
-  color: var(--green);
+.chat-connection:has(.chat-connection-link):hover {
+  border-color: var(--green-dim);
+}
+
+.chat-connection > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  width: 100%;
   text-decoration: none;
 }
 
-.chat-connection a:hover {
+.chat-connection > a:not(.chat-connection-link) {
+  color: var(--green);
+}
+
+.chat-connection > a:not(.chat-connection-link):hover {
   text-decoration: underline;
+}
+
+.chat-connection-link {
+  color: inherit;
+}
+
+.chat-connection-link:hover {
+  color: var(--green);
 }
 
 .chat-connection-icon {
@@ -641,6 +660,13 @@ html, body {
   border-radius: 50%;
   background: var(--green);
   margin-left: 4px;
+}
+
+.chat-connection-viewers {
+  font-size: 11px;
+  color: var(--text-faint);
+  padding-left: 8px;
+  border-left: 1px solid var(--border-soft);
 }
 
 .chat-banner {
@@ -717,6 +743,13 @@ html, body {
 .chat-content {
   color: var(--text-dim);
   word-break: break-word;
+}
+
+.chat-emote {
+  height: 1.6em;
+  width: auto;
+  vertical-align: middle;
+  margin: -0.3em 1px;
 }
 
 .mod-menu {
