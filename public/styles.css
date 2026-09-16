@@ -1292,89 +1292,6 @@ html, body {
   opacity: 1;
 }
 
-.storage-uploads {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: min(880px, 100%);
-  margin-bottom: 16px;
-}
-
-.storage-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-soft);
-  border-radius: 10px;
-  font-size: 12.5px;
-}
-
-.storage-upload-name {
-  flex-shrink: 0;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-}
-
-.storage-upload-bar {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--border-soft);
-  overflow: hidden;
-}
-
-.storage-upload-fill {
-  height: 100%;
-  background: var(--green);
-  transition: width 0.2s ease;
-}
-
-.storage-upload-error .storage-upload-fill {
-  background: var(--danger);
-}
-
-.storage-upload-status {
-  flex-shrink: 0;
-  color: var(--text-dim);
-  min-width: 48px;
-  text-align: right;
-}
-
-.storage-upload-error .storage-upload-status {
-  color: var(--danger);
-}
-
-.storage-upload-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.storage-upload-actions button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  font-size: 12px;
-  color: var(--text-dim);
-  background: transparent;
-  border: 1px solid var(--border-soft);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.storage-upload-actions button:hover {
-  color: var(--green);
-  border-color: var(--green-dim);
-}
-
 .storage-list {
   display: flex;
   flex-direction: column;
@@ -1560,9 +1477,5 @@ html, body {
   .storage-row-actions {
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .storage-upload-name {
-    max-width: 90px;
   }
 }
