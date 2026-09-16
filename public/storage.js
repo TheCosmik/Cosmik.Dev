@@ -165,7 +165,6 @@ function renderUsage() {
 
 function renderFolderChips() {
   const chips = [{ id: '', label: 'All files' }, ...state.folders.map((f) => ({ id: f.id, label: f.name }))];
-  if (state.folders.length) chips.push({ id: 'unfiled', label: 'Unfiled' });
 
   folderChipsEl.innerHTML = '';
   for (const chip of chips) {
@@ -177,7 +176,7 @@ function renderFolderChips() {
       renderFolderChips();
       renderList();
     });
-    if (chip.id && chip.id !== 'unfiled') {
+    if (chip.id) {
       const folder = state.folders.find((f) => f.id === chip.id);
       const renameBtn = document.createElement('span');
       renameBtn.className = 'storage-chip-edit';
@@ -209,9 +208,9 @@ function renderFolderOptions() {
 }
 
 function getVisibleFiles() {
-  let files = state.files;
-  if (currentFolderFilter === 'unfiled') files = files.filter((f) => !f.folderId);
-  else if (currentFolderFilter) files = files.filter((f) => f.folderId === currentFolderFilter);
+  let files = currentFolderFilter
+    ? state.files.filter((f) => f.folderId === currentFolderFilter)
+    : state.files.filter((f) => !f.folderId);
 
   const q = searchQuery.trim().toLowerCase();
   if (q) {
@@ -266,6 +265,10 @@ function renderFolderRow(folder) {
 
   const actions = document.createElement('div');
   actions.className = 'storage-row-actions';
+  actions.appendChild(makeActionBtn('⬇', 'Download folder (.zip)', (e) => {
+    e.stopPropagation();
+    downloadFolder(folder);
+  }));
   actions.appendChild(makeActionBtn('✎', 'Rename folder', (e) => {
     e.stopPropagation();
     openFolderModal(folder);
@@ -319,7 +322,13 @@ function renderList() {
   if (files.length === 0) {
     const msg = document.createElement('div');
     msg.className = 'finance-empty';
-    msg.textContent = state.files.length === 0 ? 'No files here yet.' : 'No files match.';
+    if (searchQuery.trim()) {
+      msg.textContent = 'No files match.';
+    } else if (!currentFolderFilter && showFolders) {
+      msg.textContent = 'No files outside a folder. Open a folder above to see its files.';
+    } else {
+      msg.textContent = 'No files here yet.';
+    }
     listEl.appendChild(msg);
     return;
   }
@@ -472,6 +481,97 @@ async function deleteFile(file) {
 }
 
 // ---------- Download / preview ----------
+
+function downloadFilename(file) {
+  const idx = file.originalFilename.lastIndexOf('.');
+  const ext = idx > 0 ? file.originalFilename.slice(idx) : '';
+  if (!ext) return file.displayName;
+  return file.displayName.toLowerCase().endsWith(ext.toLowerCase()) ? file.displayName : `${file.displayName}${ext}`;
+}
+
+function uniqueZipName(name, usedNames) {
+  if (!usedNames.has(name)) {
+    usedNames.add(name);
+    return name;
+  }
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : '';
+  let i = 2;
+  let candidate = `${base} (${i})${ext}`;
+  while (usedNames.has(candidate)) {
+    i++;
+    candidate = `${base} (${i})${ext}`;
+  }
+  usedNames.add(candidate);
+  return candidate;
+}
+
+async function mapWithConcurrency(items, limit, fn) {
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+async function downloadFolder(folder) {
+  const files = state.files.filter((f) => f.folderId === folder.id);
+  if (!files.length) {
+    showNotice('This folder is empty.', true);
+    return;
+  }
+  if (typeof JSZip === 'undefined') {
+    showNotice('Zip library failed to load. Try refreshing the page.', true);
+    return;
+  }
+
+  const zip = new JSZip();
+  const usedNames = new Set();
+  let completed = 0;
+  let failed = 0;
+  showNotice(`Zipping "${folder.name}"… 0/${files.length} files`);
+
+  await mapWithConcurrency(files, 4, async (file) => {
+    try {
+      const urlRes = await api(`/api/storage/download/url?id=${encodeURIComponent(file.id)}`);
+      if (!urlRes.ok) throw new Error('no url');
+      const res = await fetch(urlRes.data.url);
+      if (!res.ok) throw new Error('fetch failed');
+      const blob = await res.blob();
+      zip.file(uniqueZipName(downloadFilename(file), usedNames), blob);
+    } catch {
+      failed++;
+    }
+    completed++;
+    showNotice(`Zipping "${folder.name}"… ${completed}/${files.length} files`);
+  });
+
+  if (completed - failed === 0) {
+    showNotice('Could not download any files in this folder.', true);
+    return;
+  }
+
+  showNotice(`Building zip for "${folder.name}"…`);
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${folder.name}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+  if (failed > 0) {
+    showNotice(`Downloaded "${folder.name}.zip" — ${failed} file${failed === 1 ? '' : 's'} could not be included.`, true);
+  } else {
+    clearNotice();
+  }
+}
 
 async function downloadFile(file) {
   const res = await api(`/api/storage/download/url?id=${encodeURIComponent(file.id)}`);
@@ -811,7 +911,7 @@ function scheduleStateRefresh() {
 function handleFiles(fileList) {
   const files = [...fileList].filter((f) => f.size > 0);
   if (!files.length) return;
-  const folderId = currentFolderFilter && currentFolderFilter !== 'unfiled' ? currentFolderFilter : null;
+  const folderId = currentFolderFilter || null;
   const batchId = files.length > 1 ? crypto.randomUUID() : null;
   if (batchId) batches.set(batchId, { name: 'Upload', total: 0 });
   for (const file of files) {
