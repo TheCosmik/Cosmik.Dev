@@ -108,7 +108,8 @@ const ICONS = {
   audio: '<path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="7" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="16" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/>',
   archive: '<path d="M4 8h16v12H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 8V4h16v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M11 8v2h2V8m-2 4v2h2v-2m-2 4v2h2v-2" stroke="currentColor" stroke-width="1.2"/>',
   document: '<path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 2v5h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 16h6" stroke="currentColor" stroke-width="1.2"/>',
-  generic: '<path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 2v5h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>'
+  generic: '<path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 2v5h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+  folder: '<path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>'
 };
 
 const EXT_CATEGORY = {
@@ -234,14 +235,61 @@ async function loadThumbnail(imgWrapper, fileId) {
   imgWrapper.appendChild(img);
 }
 
+function renderFolderRow(folder) {
+  const row = document.createElement('div');
+  row.className = 'storage-row storage-row-folder';
+
+  const count = state.files.filter((f) => f.folderId === folder.id).length;
+  const thumb = document.createElement('div');
+  thumb.className = 'storage-thumb';
+  thumb.innerHTML = iconSvg('folder');
+  row.appendChild(thumb);
+
+  const main = document.createElement('div');
+  main.className = 'storage-row-main';
+  main.innerHTML = `
+    <span class="storage-row-name">${escapeHtml(folder.name)}</span>
+    <span class="storage-row-meta">${count} file${count === 1 ? '' : 's'}</span>
+  `;
+  row.appendChild(main);
+
+  const actions = document.createElement('div');
+  actions.className = 'storage-row-actions';
+  actions.appendChild(makeActionBtn('✎', 'Rename folder', (e) => {
+    e.stopPropagation();
+    openFolderModal(folder);
+  }));
+  row.appendChild(actions);
+
+  row.addEventListener('click', () => {
+    currentFolderFilter = folder.id;
+    renderFolderChips();
+    renderList();
+  });
+
+  return row;
+}
+
 function renderList() {
   const files = getVisibleFiles();
+  const showFolders = currentFolderFilter === '' && state.folders.length > 0;
   listEl.innerHTML = '';
-  emptyEl.hidden = state.files.length > 0;
-  if (state.files.length === 0) return;
+
+  const totallyEmpty = state.files.length === 0 && state.folders.length === 0;
+  emptyEl.hidden = !totallyEmpty;
+  if (totallyEmpty) return;
+
+  if (showFolders) {
+    for (const folder of state.folders) {
+      listEl.appendChild(renderFolderRow(folder));
+    }
+  }
 
   if (files.length === 0) {
-    listEl.innerHTML = '<div class="finance-empty">No files match.</div>';
+    const msg = document.createElement('div');
+    msg.className = 'finance-empty';
+    msg.textContent = state.files.length === 0 ? 'No files here yet.' : 'No files match.';
+    listEl.appendChild(msg);
     return;
   }
 

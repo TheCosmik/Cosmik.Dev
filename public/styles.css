@@ -1392,6 +1392,20 @@ html, body {
   border-radius: 10px;
 }
 
+.storage-row-folder {
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.storage-row-folder:hover {
+  border-color: var(--green-dim);
+  background: var(--bg-panel-raised);
+}
+
+.storage-row-folder .storage-thumb {
+  color: var(--green);
+}
+
 .storage-thumb {
   display: flex;
   align-items: center;
