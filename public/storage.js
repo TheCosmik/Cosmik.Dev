@@ -160,41 +160,31 @@ function renderUsage() {
 }
 
 function renderFolderChips() {
-  const chips = [{ id: '', label: 'All files' }, ...state.folders.map((f) => ({ id: f.id, label: f.name }))];
-
   folderChipsEl.innerHTML = '';
-  for (const chip of chips) {
-    const btn = document.createElement('button');
-    btn.className = `page-tab storage-chip${currentFolderFilter === chip.id ? ' is-active' : ''}`;
-    btn.textContent = chip.label;
-    btn.addEventListener('click', () => {
-      currentFolderFilter = chip.id;
-      renderFolderChips();
-      renderList();
-    });
-    if (chip.id) {
-      const folder = state.folders.find((f) => f.id === chip.id);
-      const renameBtn = document.createElement('span');
-      renameBtn.className = 'storage-chip-edit';
-      renameBtn.textContent = '✎';
-      renameBtn.title = 'Rename folder';
-      renameBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openFolderModal(folder);
-      });
-      btn.appendChild(renameBtn);
 
-      const deleteBtn = document.createElement('span');
-      deleteBtn.className = 'storage-chip-edit';
-      deleteBtn.textContent = '✕';
-      deleteBtn.title = 'Delete folder';
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteFolder(folder);
-      });
-      btn.appendChild(deleteBtn);
+  const allBtn = document.createElement('button');
+  allBtn.className = `page-tab storage-chip${currentFolderFilter === '' ? ' is-active' : ''}`;
+  allBtn.textContent = 'All files';
+  allBtn.addEventListener('click', () => {
+    currentFolderFilter = '';
+    renderFolderChips();
+    renderList();
+  });
+  folderChipsEl.appendChild(allBtn);
+
+  if (currentFolderFilter) {
+    const folder = state.folders.find((f) => f.id === currentFolderFilter);
+    if (folder) {
+      const sep = document.createElement('span');
+      sep.className = 'storage-chip-sep';
+      sep.textContent = '/';
+      folderChipsEl.appendChild(sep);
+
+      const current = document.createElement('span');
+      current.className = 'storage-chip storage-chip-current is-active';
+      current.textContent = folder.name;
+      folderChipsEl.appendChild(current);
     }
-    folderChipsEl.appendChild(btn);
   }
 }
 

@@ -1283,13 +1283,13 @@ html, body {
   cursor: pointer;
 }
 
-.storage-chip-edit {
-  opacity: 0.6;
-  font-size: 11px;
+.storage-chip-sep {
+  color: var(--text-faint);
+  font-size: 13px;
 }
 
-.storage-chip-edit:hover {
-  opacity: 1;
+.storage-chip-current {
+  cursor: default;
 }
 
 .storage-list {
