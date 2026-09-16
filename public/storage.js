@@ -12,6 +12,8 @@ const emptyEl = document.getElementById('storage-empty');
 const listEl = document.getElementById('storage-list');
 const uploadBtn = document.getElementById('storage-upload-btn');
 const fileInput = document.getElementById('storage-file-input');
+const uploadFolderBtn = document.getElementById('storage-upload-folder-btn');
+const folderInput = document.getElementById('storage-folder-input');
 const newFolderBtn = document.getElementById('storage-new-folder-btn');
 const dropOverlay = document.getElementById('storage-drop-overlay');
 const replaceInput = document.getElementById('storage-replace-input');
@@ -635,6 +637,41 @@ uploadBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', () => {
   handleFiles(fileInput.files);
   fileInput.value = '';
+});
+
+async function getOrCreateFolder(name) {
+  const existing = state.folders.find((f) => f.name === name);
+  if (existing) return existing;
+  const res = await api('/api/storage/folders/create', { name });
+  if (!res.ok) return null;
+  state.folders.push(res.data);
+  renderFolderOptions();
+  return res.data;
+}
+
+async function handleFolderSelection(fileList) {
+  const files = [...fileList].filter((f) => f.size > 0);
+  if (!files.length) return;
+
+  const topLevelName = files[0].webkitRelativePath
+    ? files[0].webkitRelativePath.split('/')[0]
+    : 'Uploaded folder';
+  const folder = await getOrCreateFolder(topLevelName);
+  if (!folder) {
+    showNotice('Could not create folder for upload.', true);
+    return;
+  }
+  renderFolderChips();
+
+  for (const file of files) {
+    queueUpload(file, { folderId: folder.id });
+  }
+}
+
+uploadFolderBtn.addEventListener('click', () => folderInput.click());
+folderInput.addEventListener('change', () => {
+  handleFolderSelection(folderInput.files);
+  folderInput.value = '';
 });
 
 // ---------- Drag and drop ----------
