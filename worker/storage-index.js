@@ -49,6 +49,7 @@ export class StorageIndex {
       return this.json({
         folders: this.folders,
         files: this.files,
+        pending: this.pending,
         completedBytes: this.completedBytes(),
         reservedBytes: this.reservedBytes(),
         fileCount: this.files.length

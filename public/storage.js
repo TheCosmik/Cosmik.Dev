@@ -479,32 +479,78 @@ function xhrRequest(method, url, body, { onProgress, controllerRef } = {}) {
   });
 }
 
+const MAX_CONCURRENT_UPLOADS = 4;
+const BATCH_COLLAPSE_THRESHOLD = 12;
+const uploadQueue = [];
+let activeUploadCount = 0;
+const batches = new Map();
+
 function renderUploads() {
   uploadsEl.innerHTML = '';
+
+  const rendered = new Set();
   for (const [id, u] of uploads) {
-    const row = document.createElement('div');
-    row.className = `storage-upload-row storage-upload-${u.status}`;
-    row.innerHTML = `
-      <span class="storage-upload-name">${escapeHtml(u.displayName)}</span>
-      <div class="storage-upload-bar"><div class="storage-upload-fill" style="width:${u.progress}%"></div></div>
-      <span class="storage-upload-status">${uploadStatusLabel(u)}</span>
-    `;
-    const actions = document.createElement('div');
-    actions.className = 'storage-upload-actions';
-    if (u.status === 'uploading') {
-      actions.appendChild(makeActionBtn('✕', 'Cancel', () => cancelUpload(id)));
-    } else if (u.status === 'error') {
-      actions.appendChild(makeActionBtn('⟳', 'Retry', () => retryUpload(id)));
-      actions.appendChild(makeActionBtn('✕', 'Dismiss', () => dismissUpload(id)));
-    } else if (u.status === 'done' || u.status === 'canceled') {
-      actions.appendChild(makeActionBtn('✕', 'Dismiss', () => dismissUpload(id)));
+    if (u.batchId && batches.get(u.batchId).total > BATCH_COLLAPSE_THRESHOLD) {
+      if (rendered.has(u.batchId)) continue;
+      rendered.add(u.batchId);
+      uploadsEl.appendChild(renderBatchRow(u.batchId));
+      continue;
     }
-    row.appendChild(actions);
-    uploadsEl.appendChild(row);
+    uploadsEl.appendChild(renderUploadRow(id, u));
   }
 }
 
+function renderUploadRow(id, u) {
+  const row = document.createElement('div');
+  row.className = `storage-upload-row storage-upload-${u.status}`;
+  row.innerHTML = `
+    <span class="storage-upload-name">${escapeHtml(u.displayName)}</span>
+    <div class="storage-upload-bar"><div class="storage-upload-fill" style="width:${u.progress}%"></div></div>
+    <span class="storage-upload-status">${uploadStatusLabel(u)}</span>
+  `;
+  const actions = document.createElement('div');
+  actions.className = 'storage-upload-actions';
+  if (u.status === 'uploading' || u.status === 'queued') {
+    actions.appendChild(makeActionBtn('✕', 'Cancel', () => cancelUpload(id)));
+  } else if (u.status === 'error') {
+    actions.appendChild(makeActionBtn('⟳', 'Retry', () => retryUpload(id)));
+    actions.appendChild(makeActionBtn('✕', 'Dismiss', () => dismissUpload(id)));
+  } else if (u.status === 'done' || u.status === 'canceled') {
+    actions.appendChild(makeActionBtn('✕', 'Dismiss', () => dismissUpload(id)));
+  }
+  row.appendChild(actions);
+  return row;
+}
+
+function renderBatchRow(batchId) {
+  const batch = batches.get(batchId);
+  const items = [...uploads.values()].filter((u) => u.batchId === batchId);
+  const done = items.filter((u) => u.status === 'done').length;
+  const failed = items.filter((u) => u.status === 'error').length;
+  const canceled = items.filter((u) => u.status === 'canceled').length;
+  const settled = done + failed + canceled;
+  const progress = batch.total > 0 ? (settled / batch.total) * 100 : 0;
+
+  const row = document.createElement('div');
+  row.className = 'storage-upload-row';
+  row.innerHTML = `
+    <span class="storage-upload-name">${escapeHtml(batch.name)} (${batch.total} files)</span>
+    <div class="storage-upload-bar"><div class="storage-upload-fill" style="width:${progress}%"></div></div>
+    <span class="storage-upload-status">${done} done${failed ? `, ${failed} failed` : ''}${settled < batch.total ? ` · ${batch.total - settled} left` : ''}</span>
+  `;
+  const actions = document.createElement('div');
+  actions.className = 'storage-upload-actions';
+  if (settled < batch.total) {
+    actions.appendChild(makeActionBtn('✕', 'Cancel remaining', () => cancelBatch(batchId)));
+  } else {
+    actions.appendChild(makeActionBtn('✕', 'Dismiss', () => dismissBatch(batchId)));
+  }
+  row.appendChild(actions);
+  return row;
+}
+
 function uploadStatusLabel(u) {
+  if (u.status === 'queued') return 'Waiting…';
   if (u.status === 'uploading') return `${Math.round(u.progress)}%`;
   if (u.status === 'done') return 'Done';
   if (u.status === 'canceled') return 'Canceled';
@@ -522,6 +568,8 @@ function updateUpload(id, patch) {
 function cancelUpload(id) {
   const u = uploads.get(id);
   if (!u) return;
+  const queueIdx = uploadQueue.indexOf(id);
+  if (queueIdx !== -1) uploadQueue.splice(queueIdx, 1);
   if (u.controllerRef && u.controllerRef.xhr) {
     try { u.controllerRef.xhr.abort(); } catch { /* ignore */ }
   }
@@ -529,19 +577,50 @@ function cancelUpload(id) {
   updateUpload(id, { status: 'canceled' });
 }
 
+function cancelBatch(batchId) {
+  for (const u of uploads.values()) {
+    if (u.batchId === batchId && (u.status === 'queued' || u.status === 'uploading')) {
+      cancelUpload(u.id);
+    }
+  }
+}
+
 function dismissUpload(id) {
   uploads.delete(id);
+  renderUploads();
+}
+
+function dismissBatch(batchId) {
+  for (const [id, u] of uploads) {
+    if (u.batchId === batchId) uploads.delete(id);
+  }
+  batches.delete(batchId);
   renderUploads();
 }
 
 function retryUpload(id) {
   const u = uploads.get(id);
   if (!u) return;
-  updateUpload(id, { status: 'uploading', progress: 0, error: null, pendingId: null });
-  runUpload(id);
+  updateUpload(id, { status: 'queued', progress: 0, error: null, pendingId: null });
+  uploadQueue.push(id);
+  processUploadQueue();
 }
 
-function queueUpload(file, { displayName, folderId, replaceFileId } = {}) {
+function processUploadQueue() {
+  while (activeUploadCount < MAX_CONCURRENT_UPLOADS && uploadQueue.length > 0) {
+    const id = uploadQueue.shift();
+    const u = uploads.get(id);
+    if (!u || u.status === 'canceled') continue;
+    activeUploadCount++;
+    updateUpload(id, { status: 'uploading' });
+    runUpload(id).finally(() => {
+      activeUploadCount--;
+      processUploadQueue();
+    });
+  }
+}
+
+function queueUpload(file, { displayName, folderId, replaceFileId, batchId } = {}) {
   const id = crypto.randomUUID();
   uploads.set(id, {
     id,
@@ -550,12 +629,15 @@ function queueUpload(file, { displayName, folderId, replaceFileId } = {}) {
     folderId: folderId || null,
     replaceFileId: replaceFileId || null,
     progress: 0,
-    status: 'uploading',
+    status: 'queued',
     pendingId: null,
+    batchId: batchId || null,
     controllerRef: {}
   });
+  if (batchId) batches.get(batchId).total++;
   renderUploads();
-  runUpload(id);
+  uploadQueue.push(id);
+  processUploadQueue();
 }
 
 async function runUpload(id) {
@@ -611,7 +693,7 @@ async function runUpload(id) {
     }
 
     updateUpload(id, { status: 'done', progress: 100 });
-    await loadState();
+    scheduleStateRefresh();
   } catch (err) {
     if (err && err.canceled) {
       updateUpload(id, { status: 'canceled' });
@@ -621,15 +703,23 @@ async function runUpload(id) {
   }
 }
 
+let stateRefreshTimer = null;
+function scheduleStateRefresh() {
+  clearTimeout(stateRefreshTimer);
+  stateRefreshTimer = setTimeout(loadState, 400);
+}
+
 function handleFiles(fileList) {
   const files = [...fileList].filter((f) => f.size > 0);
   if (!files.length) return;
   const folderId = currentFolderFilter && currentFolderFilter !== 'unfiled' ? currentFolderFilter : null;
+  const batchId = files.length > 1 ? crypto.randomUUID() : null;
+  if (batchId) batches.set(batchId, { name: 'Upload', total: 0 });
   for (const file of files) {
     if (file.size > MULTIPART_THRESHOLD * 1024) {
       showNotice(`"${file.name}" is unusually large; upload may take a while.`);
     }
-    queueUpload(file, { folderId });
+    queueUpload(file, { folderId, batchId });
   }
 }
 
@@ -663,8 +753,10 @@ async function handleFolderSelection(fileList) {
   }
   renderFolderChips();
 
+  const batchId = crypto.randomUUID();
+  batches.set(batchId, { name: topLevelName, total: 0 });
   for (const file of files) {
-    queueUpload(file, { folderId: folder.id });
+    queueUpload(file, { folderId: folder.id, batchId });
   }
 }
 

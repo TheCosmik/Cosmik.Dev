@@ -74,6 +74,13 @@ export async function handleStorageState(request, env) {
   return json({
     folders: data.folders,
     files: data.files,
+    pendingUploads: data.pending.map((p) => ({
+      id: p.id,
+      originalFilename: p.originalFilename,
+      declaredSize: p.declaredSize,
+      mode: p.mode,
+      createdAt: p.createdAt
+    })),
     fileCount: data.fileCount,
     limitBytes: limit,
     usedBytes: used,
