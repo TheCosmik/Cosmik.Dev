@@ -18,10 +18,9 @@ not_found_handling = "404-page"
 binding = "COSMIK_KV"
 id = "696129bec3a449b4be2b737dd8364f4f"
 
-# R2 bucket binding — uncomment once the bucket exists (see storage setup steps):
-# [[r2_buckets]]
-# binding = "STORAGE_BUCKET"
-# bucket_name = "cosmikdev-storage"
+[[r2_buckets]]
+binding = "STORAGE_BUCKET"
+bucket_name = "cosmikdev-storage"
 
 [[durable_objects.bindings]]
 name = "TWITCH_SOCKET"

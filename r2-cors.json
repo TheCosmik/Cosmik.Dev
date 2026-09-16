@@ -1,11 +1,14 @@
-[
-  {
-    "allowed": {
-      "origins": ["https://cosmik.dev", "https://www.cosmik.dev"],
-      "methods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
-      "headers": ["*"]
-    },
-    "exposeHeaders": ["ETag"],
-    "maxAgeSeconds": 3600
-  }
-]
+{
+  "rules": [
+    {
+      "id": "cosmikdev-storage-cors",
+      "allowed": {
+        "origins": ["https://cosmik.dev", "https://www.cosmik.dev"],
+        "methods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+        "headers": ["*"]
+      },
+      "exposeHeaders": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}
