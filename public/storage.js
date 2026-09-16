@@ -637,11 +637,31 @@ function uploadStatusLabel(u) {
   return '';
 }
 
+const AUTO_DISMISS_MS = 3000;
+
 function updateUpload(id, patch) {
   const u = uploads.get(id);
   if (!u) return;
   Object.assign(u, patch);
   renderUploads();
+
+  if (u.status !== 'done') return;
+
+  const batch = u.batchId ? batches.get(u.batchId) : null;
+  if (batch && batch.total > BATCH_COLLAPSE_THRESHOLD) {
+    maybeScheduleBatchDismiss(u.batchId, batch);
+  } else if (!u.autoDismissScheduled) {
+    u.autoDismissScheduled = true;
+    setTimeout(() => dismissUpload(id), AUTO_DISMISS_MS);
+  }
+}
+
+function maybeScheduleBatchDismiss(batchId, batch) {
+  if (batch.dismissScheduled) return;
+  const items = [...uploads.values()].filter((x) => x.batchId === batchId);
+  if (items.length < batch.total || !items.every((x) => x.status === 'done')) return;
+  batch.dismissScheduled = true;
+  setTimeout(() => dismissBatch(batchId), AUTO_DISMISS_MS);
 }
 
 function cancelUpload(id) {
@@ -680,7 +700,7 @@ function dismissBatch(batchId) {
 function retryUpload(id) {
   const u = uploads.get(id);
   if (!u) return;
-  updateUpload(id, { status: 'queued', progress: 0, error: null, pendingId: null });
+  updateUpload(id, { status: 'queued', progress: 0, error: null, pendingId: null, autoDismissScheduled: false });
   uploadQueue.push(id);
   processUploadQueue();
 }
