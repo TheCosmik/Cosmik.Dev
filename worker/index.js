@@ -7,6 +7,7 @@ import {
 import {
   handleAuthStart,
   handleAuthCallback,
+  handleDisconnect,
   handleTwitchWebhook,
   handleKickWebhook,
   handleChatRecent,
@@ -285,12 +286,20 @@ export default {
       return handleAuthCallback(request, env, 'twitch');
     }
 
+    if (url.pathname === '/api/auth/twitch/disconnect') {
+      return handleDisconnect(request, env, 'twitch');
+    }
+
     if (url.pathname === '/api/auth/kick/start') {
       return handleAuthStart(request, env, 'kick');
     }
 
     if (url.pathname === '/api/auth/kick/callback') {
       return handleAuthCallback(request, env, 'kick');
+    }
+
+    if (url.pathname === '/api/auth/kick/disconnect') {
+      return handleDisconnect(request, env, 'kick');
     }
 
     if (url.pathname === '/api/webhooks/twitch') {

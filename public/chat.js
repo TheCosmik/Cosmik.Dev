@@ -64,7 +64,9 @@ function renderConnections(status) {
           ${viewers}
           <span class="chat-connection-dot"></span>
         </a>
+        <button class="chat-connection-disconnect" title="Disconnect ${platform}" aria-label="Disconnect ${platform}">✕</button>
       `;
+      pill.querySelector('.chat-connection-disconnect').addEventListener('click', () => disconnectPlatform(platform));
     } else {
       pill.innerHTML = `
         <span class="chat-connection-icon">${PLATFORM_ICONS[platform]}</span>
@@ -196,6 +198,27 @@ function connectChatSocket() {
   chatSocket.addEventListener('error', () => {
     chatSocket.close();
   });
+}
+
+async function disconnectPlatform(platform) {
+  if (!confirm(`Disconnect ${platform}? You'll need to reconnect to receive its chat again.`)) return;
+  try {
+    const res = await fetch(`/api/auth/${platform}/disconnect`, { method: 'POST' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      bannerEl.textContent = `Failed to disconnect ${platform}: ${data.error || res.status}`;
+      bannerEl.classList.remove('show');
+      bannerEl.classList.add('show', 'error');
+      return;
+    }
+    bannerEl.textContent = `Disconnected ${platform}.`;
+    bannerEl.classList.remove('error');
+    bannerEl.classList.add('show');
+    await pollStatus();
+  } catch {
+    bannerEl.textContent = `Failed to disconnect ${platform}: network error`;
+    bannerEl.classList.add('show', 'error');
+  }
 }
 
 async function pollStatus() {

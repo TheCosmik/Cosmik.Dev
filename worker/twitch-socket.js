@@ -7,6 +7,10 @@ async function getTwitchToken(env) {
   return raw ? JSON.parse(raw) : null;
 }
 
+async function hasTwitchToken(env) {
+  return Boolean(await env.COSMIK_KV.get('oauth:twitch'));
+}
+
 async function appendMessage(env, message) {
   const id = env.CHAT_ROOM.idFromName('main');
   await env.CHAT_ROOM.get(id).fetch('https://chat-room.internal/append', {
@@ -45,7 +49,24 @@ export class TwitchChatSocket {
       );
     }
 
-    if (!this.ws || this.ws.readyState !== 1) {
+    if (url.pathname === '/disconnect') {
+      if (this.ws) {
+        try {
+          this.ws.close();
+        } catch {
+          // already closed
+        }
+        this.ws = null;
+      }
+      this.sessionId = null;
+      await this.state.storage.deleteAlarm();
+      await this.state.storage.put('lastError', null);
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if ((!this.ws || this.ws.readyState !== 1) && (await hasTwitchToken(this.env))) {
       await this.connect();
     }
 
@@ -61,7 +82,7 @@ export class TwitchChatSocket {
   }
 
   async alarm() {
-    if (!this.ws || this.ws.readyState !== 1) {
+    if ((!this.ws || this.ws.readyState !== 1) && (await hasTwitchToken(this.env))) {
       await this.connect();
     }
     await this.state.storage.setAlarm(Date.now() + HEALTH_CHECK_MS);

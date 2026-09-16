@@ -631,16 +631,35 @@ html, body {
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  width: 100%;
   text-decoration: none;
 }
 
 .chat-connection > a:not(.chat-connection-link) {
+  width: 100%;
   color: var(--green);
 }
 
 .chat-connection > a:not(.chat-connection-link):hover {
   text-decoration: underline;
+}
+
+.chat-connection-disconnect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-faint);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border-soft);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chat-connection-disconnect:hover {
+  color: var(--danger);
 }
 
 .chat-connection-link {

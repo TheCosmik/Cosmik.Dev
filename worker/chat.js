@@ -220,6 +220,18 @@ async function twitchDeleteMessage(env, messageId) {
   return { ok: res.ok, status: res.status };
 }
 
+async function twitchRevoke(env, accessToken) {
+  try {
+    await fetch('https://id.twitch.tv/oauth2/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: env.TWITCH_CLIENT_ID, token: accessToken })
+    });
+  } catch {
+    // best-effort cleanup only
+  }
+}
+
 // ---------- Kick ----------
 
 function kickAuthorizeUrl(env, state, codeChallenge) {
@@ -284,6 +296,43 @@ async function kickSubscribeChat(accessToken) {
   });
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, data };
+}
+
+async function kickListSubscriptions(accessToken, broadcasterUserId) {
+  const params = new URLSearchParams({ broadcaster_user_id: String(broadcasterUserId) });
+  const res = await fetch(`https://api.kick.com/public/v1/events/subscriptions?${params}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => ({}));
+  return Array.isArray(data.data) ? data.data : [];
+}
+
+async function kickDeleteSubscriptions(accessToken, ids) {
+  if (!ids.length) return;
+  const params = new URLSearchParams();
+  for (const id of ids) params.append('id', id);
+  await fetch(`https://api.kick.com/public/v1/events/subscriptions?${params}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+}
+
+async function kickRevoke(env, token, tokenTypeHint) {
+  try {
+    await fetch('https://id.kick.com/oauth/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: env.KICK_CLIENT_ID,
+        client_secret: env.KICK_CLIENT_SECRET,
+        token,
+        token_hint_type: tokenTypeHint
+      })
+    });
+  } catch {
+    // best-effort cleanup only
+  }
 }
 
 async function kickValidAccessToken(env) {
@@ -421,6 +470,36 @@ export async function handleAuthCallback(request, env, platform) {
   }
 
   return Response.redirect(`${REDIRECT_BASE}/chat.html?connected=${platform}`, 302);
+}
+
+export async function handleDisconnect(request, env, platform) {
+  if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
+  if (platform !== 'twitch' && platform !== 'kick') return json({ error: 'unknown platform' }, 400);
+
+  const token = await getToken(env, platform);
+  if (!token) return json({ ok: true });
+
+  if (platform === 'twitch') {
+    if (env.TWITCH_SOCKET) {
+      const id = env.TWITCH_SOCKET.idFromName('main');
+      await env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/disconnect');
+    }
+    await twitchRevoke(env, token.access_token);
+  } else {
+    try {
+      const accessToken = await kickValidAccessToken(env);
+      const subs = await kickListSubscriptions(accessToken, token.user_id);
+      const ids = subs.map((s) => s.id || s.subscription_id).filter(Boolean);
+      await kickDeleteSubscriptions(accessToken, ids);
+    } catch {
+      // best-effort; still proceed to revoke + remove the local token below
+    }
+    await kickRevoke(env, token.access_token, 'access_token');
+    if (token.refresh_token) await kickRevoke(env, token.refresh_token, 'refresh_token');
+  }
+
+  await env.COSMIK_KV.delete(`oauth:${platform}`);
+  return json({ ok: true });
 }
 
 function buildTwitchContent(message) {
