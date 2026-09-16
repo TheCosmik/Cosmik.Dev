@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmik — Storage</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07090a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <a href="/" class="back-link">
+    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 12H5M11 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Exit
+  </a>
+
+  <nav class="page-tabs">
+    <a href="/home.html" class="page-tab">Home</a>
+    <a href="/chat.html" class="page-tab">Live Chat</a>
+    <a href="/finance.html" class="page-tab">Finances</a>
+    <a href="/storage.html" class="page-tab is-active">Storage</a>
+  </nav>
+
+  <main class="storagepage" id="storage-dropzone">
+    <div class="storagepage-header">
+      <h1 class="dashboard-title">Storage</h1>
+      <p class="dashboard-sub">Your private file library.</p>
+    </div>
+
+    <div id="storage-notice" class="storage-notice"></div>
+
+    <div class="storage-usage">
+      <div class="storage-usage-bar"><div id="storage-usage-fill" class="storage-usage-fill"></div></div>
+      <div class="storage-usage-row">
+        <span id="storage-usage-text">Loading…</span>
+        <span id="storage-usage-count"></span>
+      </div>
+    </div>
+
+    <div class="storage-toolbar">
+      <input type="search" id="storage-search" class="storage-search" placeholder="Search files…">
+      <select id="storage-sort" class="storage-sort">
+        <option value="name">Name</option>
+        <option value="size">Size</option>
+        <option value="date" selected>Upload date</option>
+      </select>
+      <button id="storage-new-folder-btn" class="finance-add-btn storage-secondary-btn">+ Folder</button>
+      <button id="storage-upload-btn" class="finance-add-btn">+ Upload</button>
+      <input type="file" id="storage-file-input" multiple hidden>
+    </div>
+
+    <div id="storage-folder-chips" class="storage-folder-chips"></div>
+
+    <div id="storage-uploads" class="storage-uploads"></div>
+
+    <div id="storage-empty" class="finance-empty" hidden>No files yet. Drag files here or click Upload.</div>
+    <div id="storage-list" class="storage-list"></div>
+  </main>
+
+  <div id="storage-drop-overlay" class="storage-drop-overlay">Drop files to upload</div>
+
+  <div id="storage-file-modal" class="modal-overlay">
+    <div class="modal-panel">
+      <button id="storage-file-modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="storage-file-modal-title" class="modal-title">Edit File</h2>
+      <form id="storage-file-form" class="finance-form">
+        <label class="finance-field">
+          <span>Display name</span>
+          <input type="text" id="storage-file-name" maxlength="200" required>
+        </label>
+        <label class="finance-field">
+          <span>Description</span>
+          <textarea id="storage-file-description" maxlength="2000" rows="3"></textarea>
+        </label>
+        <label class="finance-field">
+          <span>Folder</span>
+          <select id="storage-file-folder">
+            <option value="">No folder</option>
+          </select>
+        </label>
+        <p id="storage-file-form-error" class="finance-form-error"></p>
+        <div class="modal-links">
+          <button type="submit" class="modal-link primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="storage-folder-modal" class="modal-overlay">
+    <div class="modal-panel">
+      <button id="storage-folder-modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="storage-folder-modal-title" class="modal-title">New Folder</h2>
+      <form id="storage-folder-form" class="finance-form">
+        <label class="finance-field">
+          <span>Folder name</span>
+          <input type="text" id="storage-folder-name" maxlength="200" required>
+        </label>
+        <p id="storage-folder-form-error" class="finance-form-error"></p>
+        <div class="modal-links">
+          <button type="submit" class="modal-link primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="storage-preview-modal" class="modal-overlay">
+    <div class="modal-panel storage-preview-panel">
+      <button id="storage-preview-modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="storage-preview-title" class="modal-title"></h2>
+      <div id="storage-preview-body" class="storage-preview-body"></div>
+    </div>
+  </div>
+
+  <input type="file" id="storage-replace-input" hidden>
+
+  <script src="background.js"></script>
+  <script src="storage.js"></script>
+</body>
+</html>

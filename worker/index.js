@@ -21,9 +21,27 @@ import {
   handleFinanceUpdate,
   handleFinanceDelete
 } from './finance.js';
+import {
+  handleStorageState,
+  handleFolderCreate,
+  handleFolderRename,
+  handleFileEdit,
+  handleFileDelete,
+  handleUploadInit,
+  handleUploadPartUrl,
+  handleUploadComplete,
+  handleUploadAbort,
+  handleUploadProxy,
+  handleDownloadUrl,
+  handlePreviewUrl,
+  handleDownloadProxy,
+  handlePreviewProxy,
+  cleanupStalePendingUploads
+} from './storage.js';
 export { TwitchChatSocket } from './twitch-socket.js';
 export { ChatRoom } from './chat-room.js';
 export { FinanceStore } from './finance-store.js';
+export { StorageIndex } from './storage-index.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
@@ -318,7 +336,63 @@ export default {
       return handleFinanceDelete(request, env);
     }
 
-    if (url.pathname === '/home.html' || url.pathname === '/chat.html' || url.pathname === '/finance.html') {
+    if (url.pathname === '/api/storage/state') {
+      return handleStorageState(request, env);
+    }
+
+    if (url.pathname === '/api/storage/folders/create') {
+      return handleFolderCreate(request, env);
+    }
+
+    if (url.pathname === '/api/storage/folders/rename') {
+      return handleFolderRename(request, env);
+    }
+
+    if (url.pathname === '/api/storage/files/edit') {
+      return handleFileEdit(request, env);
+    }
+
+    if (url.pathname === '/api/storage/files/delete') {
+      return handleFileDelete(request, env);
+    }
+
+    if (url.pathname === '/api/storage/upload/init') {
+      return handleUploadInit(request, env);
+    }
+
+    if (url.pathname === '/api/storage/upload/part-url') {
+      return handleUploadPartUrl(request, env);
+    }
+
+    if (url.pathname === '/api/storage/upload/complete') {
+      return handleUploadComplete(request, env);
+    }
+
+    if (url.pathname === '/api/storage/upload/abort') {
+      return handleUploadAbort(request, env);
+    }
+
+    if (url.pathname === '/api/storage/upload/proxy') {
+      return handleUploadProxy(request, env);
+    }
+
+    if (url.pathname === '/api/storage/download/url') {
+      return handleDownloadUrl(request, env);
+    }
+
+    if (url.pathname === '/api/storage/preview/url') {
+      return handlePreviewUrl(request, env);
+    }
+
+    if (url.pathname === '/api/storage/download/proxy') {
+      return handleDownloadProxy(request, env);
+    }
+
+    if (url.pathname === '/api/storage/preview/proxy') {
+      return handlePreviewProxy(request, env);
+    }
+
+    if (url.pathname === '/home.html' || url.pathname === '/chat.html' || url.pathname === '/finance.html' || url.pathname === '/storage.html') {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));
@@ -331,8 +405,10 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    if (!env.TWITCH_SOCKET) return;
-    const id = env.TWITCH_SOCKET.idFromName('main');
-    ctx.waitUntil(env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/'));
+    if (env.TWITCH_SOCKET) {
+      const id = env.TWITCH_SOCKET.idFromName('main');
+      ctx.waitUntil(env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/'));
+    }
+    ctx.waitUntil(cleanupStalePendingUploads(env));
   }
 };

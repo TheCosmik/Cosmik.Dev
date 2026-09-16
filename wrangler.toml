@@ -18,6 +18,11 @@ not_found_handling = "404-page"
 binding = "COSMIK_KV"
 id = "696129bec3a449b4be2b737dd8364f4f"
 
+# R2 bucket binding — uncomment once the bucket exists (see storage setup steps):
+# [[r2_buckets]]
+# binding = "STORAGE_BUCKET"
+# bucket_name = "cosmikdev-storage"
+
 [[durable_objects.bindings]]
 name = "TWITCH_SOCKET"
 class_name = "TwitchChatSocket"
@@ -29,6 +34,10 @@ class_name = "ChatRoom"
 [[durable_objects.bindings]]
 name = "FINANCE_STORE"
 class_name = "FinanceStore"
+
+[[durable_objects.bindings]]
+name = "STORAGE_INDEX"
+class_name = "StorageIndex"
 
 [[migrations]]
 tag = "v1"
@@ -42,5 +51,14 @@ new_sqlite_classes = ["ChatRoom"]
 tag = "v3"
 new_sqlite_classes = ["FinanceStore"]
 
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["StorageIndex"]
+
 [triggers]
 crons = ["*/5 * * * *"]
+
+[vars]
+STORAGE_LIMIT_GB = "100"
+R2_ACCOUNT_ID = "67c33331176ac315225c7f48175ec1cd"
+R2_BUCKET_NAME = "cosmikdev-storage"
