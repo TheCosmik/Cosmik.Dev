@@ -126,6 +126,22 @@ export async function handleFolderRename(request, env) {
   return json(data, status);
 }
 
+export async function handleFolderDelete(request, env) {
+  if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
+  if (!env.STORAGE_INDEX) return json({ error: 'not configured' }, 500);
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
+  if (!body.id) return json({ error: 'invalid input' }, 400);
+
+  const { status, data } = await storeFetch(env, '/folders/delete', { id: body.id });
+  return json(data, status);
+}
+
 export async function handleFileEdit(request, env) {
   if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
   if (!env.STORAGE_INDEX) return json({ error: 'not configured' }, 500);

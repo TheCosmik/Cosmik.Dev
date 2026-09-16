@@ -71,6 +71,22 @@ export class StorageIndex {
       return this.json(folder);
     }
 
+    if (url.pathname === '/folders/delete') {
+      const idx = this.folders.findIndex((f) => f.id === body.id);
+      if (idx === -1) return this.json({ error: 'not found' }, 404);
+      this.folders.splice(idx, 1);
+      let filesChanged = false;
+      for (const file of this.files) {
+        if (file.folderId === body.id) {
+          file.folderId = null;
+          filesChanged = true;
+        }
+      }
+      await this.saveFolders();
+      if (filesChanged) await this.saveFiles();
+      return this.json({ ok: true });
+    }
+
     if (url.pathname === '/files/edit') {
       const file = this.files.find((f) => f.id === body.id);
       if (!file) return this.json({ error: 'not found' }, 404);

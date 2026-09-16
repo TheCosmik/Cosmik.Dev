@@ -25,6 +25,7 @@ import {
   handleStorageState,
   handleFolderCreate,
   handleFolderRename,
+  handleFolderDelete,
   handleFileEdit,
   handleFileDelete,
   handleUploadInit,
@@ -346,6 +347,10 @@ export default {
 
     if (url.pathname === '/api/storage/folders/rename') {
       return handleFolderRename(request, env);
+    }
+
+    if (url.pathname === '/api/storage/folders/delete') {
+      return handleFolderDelete(request, env);
     }
 
     if (url.pathname === '/api/storage/files/edit') {

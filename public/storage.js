@@ -178,15 +178,26 @@ function renderFolderChips() {
       renderList();
     });
     if (chip.id && chip.id !== 'unfiled') {
+      const folder = state.folders.find((f) => f.id === chip.id);
       const renameBtn = document.createElement('span');
       renameBtn.className = 'storage-chip-edit';
       renameBtn.textContent = '✎';
       renameBtn.title = 'Rename folder';
       renameBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        openFolderModal(state.folders.find((f) => f.id === chip.id));
+        openFolderModal(folder);
       });
       btn.appendChild(renameBtn);
+
+      const deleteBtn = document.createElement('span');
+      deleteBtn.className = 'storage-chip-edit';
+      deleteBtn.textContent = '✕';
+      deleteBtn.title = 'Delete folder';
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteFolder(folder);
+      });
+      btn.appendChild(deleteBtn);
     }
     folderChipsEl.appendChild(btn);
   }
@@ -259,6 +270,10 @@ function renderFolderRow(folder) {
     e.stopPropagation();
     openFolderModal(folder);
   }));
+  actions.appendChild(makeActionBtn('✕', 'Delete folder', (e) => {
+    e.stopPropagation();
+    deleteFolder(folder);
+  }, 'finance-delete'));
   row.appendChild(actions);
 
   row.addEventListener('click', () => {
@@ -268,6 +283,22 @@ function renderFolderRow(folder) {
   });
 
   return row;
+}
+
+async function deleteFolder(folder) {
+  const count = state.files.filter((f) => f.folderId === folder.id).length;
+  const message = count > 0
+    ? `Delete "${folder.name}"? ${count} file${count === 1 ? '' : 's'} inside will become unfiled, not deleted.`
+    : `Delete "${folder.name}"?`;
+  if (!confirm(message)) return;
+
+  const res = await api('/api/storage/folders/delete', { id: folder.id });
+  if (!res.ok) {
+    showNotice(res.data.error || 'Delete failed.', true);
+    return;
+  }
+  if (currentFolderFilter === folder.id) currentFolderFilter = '';
+  await loadState();
 }
 
 function renderList() {
