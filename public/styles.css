@@ -1481,26 +1481,38 @@ html, body {
   padding: 96px 24px 60px;
 }
 
+.dashpage .dashboard-header {
+  width: min(1500px, 100%);
+}
+
+.dashpage .dashboard-title {
+  font-size: 36px;
+}
+
+.dashpage .dashboard-sub {
+  font-size: 14.5px;
+}
+
 .dash-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-  width: min(1000px, 100%);
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 22px;
+  width: min(1500px, 100%);
 }
 
 .dash-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 20px 22px;
+  gap: 14px;
+  padding: 28px 30px;
   background: var(--bg-panel);
   border: 1px solid var(--border-soft);
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .dash-card-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1510,16 +1522,16 @@ html, body {
 .dash-card-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 13.5px;
+  gap: 10px;
+  font-size: 15px;
   color: var(--text);
   flex: 1;
 }
 
 .dash-card-link {
   align-self: flex-start;
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 6px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1564,23 +1576,24 @@ html, body {
 }
 
 .dash-value {
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
 
 .dash-warn {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--danger);
 }
 
 .dash-muted {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-faint);
 }
 
 .dash-usage-bar {
-  height: 6px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   background: var(--border-soft);
   overflow: hidden;
 }
