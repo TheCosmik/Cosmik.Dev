@@ -406,7 +406,7 @@ export default {
       return handlePreviewProxy(request, env);
     }
 
-    if (url.pathname === '/home.html' || url.pathname === '/chat.html' || url.pathname === '/finance.html' || url.pathname === '/storage.html') {
+    if (url.pathname === '/home.html' || url.pathname === '/projects.html' || url.pathname === '/chat.html' || url.pathname === '/finance.html' || url.pathname === '/storage.html') {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));

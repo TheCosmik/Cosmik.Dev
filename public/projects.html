@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosmik — Chat</title>
+<title>Cosmik — Projects</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#07090a">
@@ -24,39 +24,40 @@
 
   <nav class="page-tabs">
     <a href="/home.html" class="page-tab">Home</a>
-    <a href="/projects.html" class="page-tab">Projects</a>
-    <a href="/chat.html" class="page-tab is-active">Live Chat</a>
+    <a href="/projects.html" class="page-tab is-active">Projects</a>
+    <a href="/chat.html" class="page-tab">Live Chat</a>
     <a href="/finance.html" class="page-tab">Finances</a>
     <a href="/storage.html" class="page-tab">Storage</a>
   </nav>
 
-  <main class="chatpage">
-    <div class="chatpage-header">
-      <h1 class="dashboard-title">Live Chat</h1>
-      <p class="dashboard-sub">Kick + Twitch, merged.</p>
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Projects</h1>
+      <p class="dashboard-sub">A few things I've been building.</p>
     </div>
+    <div id="project-grid" class="project-grid"></div>
 
-    <div class="chat-toolbar">
-      <div id="chat-connections" class="chat-connections"></div>
-      <div class="chat-size-control">
-        <span class="chat-size-label chat-size-label-sm">A</span>
-        <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
-        <span class="chat-size-label chat-size-label-lg">A</span>
-      </div>
+    <div class="click-stats">
+      <h2 class="click-stats-title">Link Clicks</h2>
+      <div id="click-stats-list" class="click-stats-list"></div>
     </div>
-    <p id="chat-banner" class="chat-banner"></p>
-
-    <div id="chat-feed" class="chat-feed"></div>
   </main>
 
-  <div id="mod-menu" class="mod-menu">
-    <button data-action="timeout" data-minutes="10">Timeout 10m</button>
-    <button data-action="timeout" data-minutes="60">Timeout 1h</button>
-    <button data-action="ban">Ban</button>
-    <button data-action="delete">Delete message</button>
+  <div id="project-modal" class="modal-overlay">
+    <div class="modal-panel">
+      <button id="modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <span id="modal-icon" class="modal-icon"></span>
+      <h2 id="modal-title" class="modal-title"></h2>
+      <p id="modal-tagline" class="modal-tagline"></p>
+      <div class="modal-links">
+        <a id="modal-live" class="modal-link primary" href="#" target="_blank" rel="noopener">Visit Site</a>
+        <a id="modal-repo" class="modal-link" href="#" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
   </div>
 
   <script src="background.js"></script>
-  <script src="chat.js"></script>
+  <script src="projects.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
