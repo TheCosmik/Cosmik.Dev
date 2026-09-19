@@ -1,5 +1,14 @@
 const PROJECTS = [
   {
+    name: 'Aevaris',
+    tagline: 'OSRS-inspired browser MMO — a playable 3D prototype',
+    icon: '\u{1F3D4}',
+    iconImage: 'aevaris-logo.png',
+    accent: [214, 176, 64],
+    liveUrl: 'https://aevaris.cosmik.workers.dev/',
+    repoUrl: 'https://github.com/TheCosmik/Aevaris'
+  },
+  {
     name: 'CapeSearch',
     tagline: 'Minecraft cape tracker, player profiles & leaderboards',
     icon: '\u{1F9E5}',

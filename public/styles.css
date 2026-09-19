@@ -467,6 +467,17 @@ html, body {
   background: rgba(var(--accent), 0.14);
 }
 
+.project-icon.has-image {
+  width: auto;
+  padding: 0 12px;
+}
+
+.project-icon img {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
 .project-name {
   font-size: 15px;
   font-weight: 600;
@@ -897,6 +908,17 @@ html, body {
   font-size: 20px;
   border-radius: 12px;
   background: rgba(var(--accent), 0.16);
+}
+
+.modal-icon.has-image {
+  width: auto;
+  padding: 0 16px;
+}
+
+.modal-icon img {
+  display: block;
+  height: 32px;
+  width: auto;
 }
 
 .modal-title {

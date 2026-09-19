@@ -8,6 +8,10 @@ const modalRepo = document.getElementById('modal-repo');
 const modalClose = document.getElementById('modal-close');
 const modalPanel = document.querySelector('.modal-panel');
 
+function iconMarkup(project) {
+  return project.iconImage ? `<img src="${project.iconImage}" alt="">` : project.icon;
+}
+
 function repoPathFromUrl(url) {
   try {
     return new URL(url).pathname.replace(/^\/|\/$/g, '');
@@ -31,7 +35,7 @@ PROJECTS.forEach((project) => {
   card.className = 'project-card';
   card.style.setProperty('--accent', `${project.accent[0]}, ${project.accent[1]}, ${project.accent[2]}`);
   card.innerHTML = `
-    <span class="project-icon">${project.icon}</span>
+    <span class="project-icon${project.iconImage ? ' has-image' : ''}">${iconMarkup(project)}</span>
     <span class="project-name">${project.name}</span>
     <span class="project-tagline">${project.tagline}</span>
     <span class="project-stats" data-stats></span>
@@ -69,7 +73,8 @@ fetch('/api/click-stats')
 
 function openModal(project) {
   modalPanel.style.setProperty('--accent', `${project.accent[0]}, ${project.accent[1]}, ${project.accent[2]}`);
-  modalIcon.textContent = project.icon;
+  modalIcon.classList.toggle('has-image', Boolean(project.iconImage));
+  modalIcon.innerHTML = iconMarkup(project);
   modalTitle.textContent = project.name;
   modalTagline.textContent = project.tagline;
   modalLive.href = project.liveUrl;
