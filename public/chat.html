@@ -38,10 +38,16 @@
 
     <div class="chat-toolbar">
       <div id="chat-connections" class="chat-connections"></div>
-      <div class="chat-size-control">
-        <span class="chat-size-label chat-size-label-sm">A</span>
-        <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
-        <span class="chat-size-label chat-size-label-lg">A</span>
+      <div class="chat-toolbar-right">
+        <div class="chat-size-control">
+          <span class="chat-size-label chat-size-label-sm">A</span>
+          <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
+          <span class="chat-size-label chat-size-label-lg">A</span>
+        </div>
+        <button id="chat-popout-btn" class="chat-popout-btn" title="Open chat in a separate window">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M14 4h6v6M20 4l-8 8M6 4H4v16h16v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Pop out
+        </button>
       </div>
     </div>
     <p id="chat-banner" class="chat-banner"></p>

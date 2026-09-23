@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmik — Chat</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07090a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <main class="chatpage chatpage-popout">
+    <div class="chat-toolbar chat-toolbar-popout">
+      <div id="chat-connections" class="chat-connections" hidden></div>
+      <div class="chat-size-control">
+        <span class="chat-size-label chat-size-label-sm">A</span>
+        <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
+        <span class="chat-size-label chat-size-label-lg">A</span>
+      </div>
+    </div>
+    <p id="chat-banner" class="chat-banner"></p>
+
+    <div id="chat-feed" class="chat-feed"></div>
+  </main>
+
+  <div id="mod-menu" class="mod-menu">
+    <button data-action="timeout" data-minutes="10">Timeout 10m</button>
+    <button data-action="timeout" data-minutes="60">Timeout 1h</button>
+    <button data-action="ban">Ban</button>
+    <button data-action="delete">Delete message</button>
+  </div>
+
+  <script src="background.js"></script>
+  <script src="chat.js"></script>
+</body>
+</html>

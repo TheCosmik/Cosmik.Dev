@@ -49,7 +49,7 @@ const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_SECONDS = 300; // 5 minutes
 const TRACKED_LINKS = ['kick', 'twitch', 'x', 'discord'];
-const GATED_PAGES = new Set(['home', 'projects', 'chat', 'finance', 'storage']);
+const GATED_PAGES = new Set(['home', 'projects', 'chat', 'chat-popout', 'finance', 'storage']);
 
 // Cloudflare's asset serving resolves clean URLs (e.g. /chat) straight to
 // their .html file, so the gate has to recognize every spelling a request
@@ -220,6 +220,60 @@ async function getTwitchLive(env) {
     return Array.isArray(data.data) && data.data.length > 0;
   } catch {
     return false;
+  }
+}
+
+async function getKickStream() {
+  try {
+    const res = await fetch('https://kick.com/api/v2/channels/cosmik', {
+      headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.livestream ? data.livestream : null;
+  } catch {
+    return null;
+  }
+}
+
+async function checkAndNotifyLive(env, ctx) {
+  if (!env.DISCORD_WEBHOOK_URL || !env.COSMIK_KV) return;
+
+  const [kickStream, twitchLive] = await Promise.all([getKickStream(), getTwitchLive(env)]);
+  const platforms = [
+    {
+      key: 'kick',
+      live: Boolean(kickStream),
+      thumbnailUrl: kickStream?.thumbnail?.url || null
+    },
+    {
+      key: 'twitch',
+      live: twitchLive,
+      thumbnailUrl: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_c0smiik-440x248.jpg'
+    }
+  ];
+
+  for (const platform of platforms) {
+    const kvKey = `live_state:${platform.key}`;
+    const wasLive = (await env.COSMIK_KV.get(kvKey)) === '1';
+    if (platform.live && !wasLive) {
+      const embed = {
+        title: 'Cosmik just went live!',
+        url: 'https://cosmik.dev',
+        color: 0xed4245,
+        thumbnail: platform.thumbnailUrl ? { url: platform.thumbnailUrl } : undefined
+      };
+      ctx.waitUntil(
+        fetch(env.DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: '@everyone', embeds: [embed] })
+        })
+      );
+    }
+    if (platform.live !== wasLive) {
+      ctx.waitUntil(env.COSMIK_KV.put(kvKey, platform.live ? '1' : '0'));
+    }
   }
 }
 
@@ -432,10 +486,13 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    if (env.TWITCH_SOCKET) {
-      const id = env.TWITCH_SOCKET.idFromName('main');
-      ctx.waitUntil(env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/'));
+    if (event.cron === '*/5 * * * *') {
+      if (env.TWITCH_SOCKET) {
+        const id = env.TWITCH_SOCKET.idFromName('main');
+        ctx.waitUntil(env.TWITCH_SOCKET.get(id).fetch('https://twitch-socket.internal/'));
+      }
+      ctx.waitUntil(cleanupStalePendingUploads(env));
     }
-    ctx.waitUntil(cleanupStalePendingUploads(env));
+    ctx.waitUntil(checkAndNotifyLive(env, ctx));
   }
 };

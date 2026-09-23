@@ -553,6 +553,14 @@ html, body {
   flex-shrink: 0;
 }
 
+.chatpage-popout {
+  padding: 14px 14px 10px;
+}
+
+.chat-toolbar-popout {
+  justify-content: flex-end;
+}
+
 .chat-toolbar {
   display: flex;
   align-items: center;
@@ -567,6 +575,40 @@ html, body {
 .chat-connections {
   display: flex;
   gap: 12px;
+}
+
+.chat-connections[hidden] {
+  display: none;
+}
+
+.chat-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.chat-popout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.chat-popout-btn:hover {
+  color: var(--green);
+  border-color: var(--green-dim);
 }
 
 .chat-size-control {
@@ -1643,6 +1685,10 @@ html, body {
   .financepage,
   .storagepage {
     padding-top: 156px;
+  }
+
+  .chatpage-popout {
+    padding-top: 14px;
   }
 
   .storage-row {

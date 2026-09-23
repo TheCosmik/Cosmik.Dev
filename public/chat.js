@@ -47,6 +47,18 @@ if (params.get('connected')) {
   history.replaceState({}, '', '/chat.html');
 }
 
+document.getElementById('chat-popout-btn')?.addEventListener('click', () => {
+  const w = 380;
+  const h = 640;
+  const left = window.screenX + (window.outerWidth - w) / 2;
+  const top = window.screenY + (window.outerHeight - h) / 2;
+  window.open(
+    '/chat-popout.html',
+    'cosmik-chat-popout',
+    `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`
+  );
+});
+
 function renderConnections(status) {
   connectionsEl.innerHTML = '';
   for (const platform of ['twitch', 'kick']) {
