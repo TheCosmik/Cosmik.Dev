@@ -49,6 +49,16 @@ const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_SECONDS = 300; // 5 minutes
 const TRACKED_LINKS = ['kick', 'twitch', 'x', 'discord'];
+const GATED_PAGES = new Set(['home', 'projects', 'chat', 'finance', 'storage']);
+
+// Cloudflare's asset serving resolves clean URLs (e.g. /chat) straight to
+// their .html file, so the gate has to recognize every spelling a request
+// could arrive as, not just the literal "/chat.html" path.
+function gatedPageName(pathname) {
+  let name = pathname.replace(/^\/+|\/+$/g, '');
+  if (name.endsWith('.html')) name = name.slice(0, -5);
+  return name;
+}
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -406,7 +416,7 @@ export default {
       return handlePreviewProxy(request, env);
     }
 
-    if (url.pathname === '/home.html' || url.pathname === '/projects.html' || url.pathname === '/chat.html' || url.pathname === '/finance.html' || url.pathname === '/storage.html') {
+    if (GATED_PAGES.has(gatedPageName(url.pathname))) {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));
