@@ -125,7 +125,10 @@ async function handleLogin(request, env) {
     { ok: true },
     200,
     {
-      'Set-Cookie': `site_auth=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_DURATION_SECONDS}`
+      // No Max-Age/Expires: this is a session cookie so closing the browser
+      // ends access. The signed token still carries its own expiry as a
+      // backstop for browsers that restore sessions across a restart.
+      'Set-Cookie': `site_auth=${token}; Path=/; HttpOnly; Secure; SameSite=Lax`
     }
   );
 }
