@@ -300,12 +300,11 @@ html, body {
   z-index: 2;
 }
 
-.notfound-code {
-  margin: 0;
-  font-size: 64px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--green);
+.notfound-image {
+  width: min(260px, 60vw);
+  height: auto;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.5));
 }
 
 .notfound-message {
