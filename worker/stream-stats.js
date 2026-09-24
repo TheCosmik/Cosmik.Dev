@@ -33,9 +33,9 @@ export class StreamStats {
 
   buildSession(cur, endedAt) {
     const end = endedAt || Date.now();
-    const platform = (p) => ({ avg: p.n ? round1(p.sum / p.n) : 0, peak: p.peak });
     const last = cur.samples[cur.samples.length - 1];
     const fresh = !endedAt && last && Date.now() - cur.lastLiveAt < STALE_LIVE_MS;
+    const platform = (p, idx) => ({ avg: p.n ? round1(p.sum / p.n) : 0, peak: p.peak, now: fresh ? last[idx] || 0 : 0 });
     return {
       id: cur.id,
       startedAt: cur.startedAt,
@@ -47,7 +47,7 @@ export class StreamStats {
         peak: cur.combined.peak,
         now: fresh ? last[1] : 0
       },
-      platforms: { kick: platform(cur.platforms.kick), twitch: platform(cur.platforms.twitch) },
+      platforms: { kick: platform(cur.platforms.kick, 2), twitch: platform(cur.platforms.twitch, 3) },
       messages: {
         kick: this.counts.kick,
         twitch: this.counts.twitch,
@@ -99,6 +99,7 @@ export class StreamStats {
 
     if (anyLive) {
       let combined = 0;
+      const perPlatform = { kick: 0, twitch: 0 };
       for (const [name, info, live] of [['kick', kick, kickLive], ['twitch', twitch, twitchLive]]) {
         if (!live) continue;
         const v = Number(info.viewers) || 0;
@@ -107,11 +108,12 @@ export class StreamStats {
         p.n += 1;
         p.peak = Math.max(p.peak, v);
         combined += v;
+        perPlatform[name] = v;
       }
       cur.combined.sum += combined;
       cur.combined.n += 1;
       cur.combined.peak = Math.max(cur.combined.peak, combined);
-      if (cur.samples.length < MAX_SAMPLES) cur.samples.push([Math.round((now - cur.startedAt) / 60000), combined]);
+      if (cur.samples.length < MAX_SAMPLES) cur.samples.push([Math.round((now - cur.startedAt) / 60000), combined, perPlatform.kick, perPlatform.twitch]);
       if (!cur.title) cur.title = (kickLive && kick.title) || (twitchLive && twitch.title) || null;
       cur.lastLiveAt = now;
       cur.offlineTicks = 0;

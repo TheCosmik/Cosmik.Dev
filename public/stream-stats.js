@@ -52,13 +52,33 @@ function chartMarkup(samples) {
   const H = 120;
   const maxT = Math.max(1, samples[samples.length - 1][0]);
   const maxV = Math.max(1, ...samples.map((s) => s[1]));
-  const points = samples.map(([t, v]) => `${((t / maxT) * W).toFixed(1)},${(H - (v / maxV) * (H - 8) - 4).toFixed(1)}`);
+  const line = (idx) => samples.map((s) => `${((s[0] / maxT) * W).toFixed(1)},${(H - ((s[idx] || 0) / maxV) * (H - 8) - 4).toFixed(1)}`).join(' ');
+  // Older saved streams only recorded the combined count, so they get just that line.
+  const hasSplit = samples.some((s) => s.length > 2);
+  const combined = line(1);
   return `
     <svg class="stats-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Viewers over time">
-      <polygon points="0,${H} ${points.join(' ')} ${W},${H}" class="stats-chart-area"/>
-      <polyline points="${points.join(' ')}" class="stats-chart-line" vector-effect="non-scaling-stroke"/>
+      <polygon points="0,${H} ${combined} ${W},${H}" class="stats-chart-area"/>
+      ${hasSplit ? `<polyline points="${line(2)}" class="stats-chart-line stats-line-kick" vector-effect="non-scaling-stroke"/>
+      <polyline points="${line(3)}" class="stats-chart-line stats-line-twitch" vector-effect="non-scaling-stroke"/>` : ''}
+      <polyline points="${combined}" class="stats-chart-line" vector-effect="non-scaling-stroke"/>
     </svg>
-    <div class="stats-chart-axis"><span>0</span><span>${formatDuration(maxT * 60000)}</span></div>`;
+    <div class="stats-chart-axis"><span>0</span><span>${formatDuration(maxT * 60000)}</span></div>
+    ${hasSplit ? '<div class="stats-legend"><span class="stats-key-all">Combined</span><span class="stats-key-kick">Kick</span><span class="stats-key-twitch">Twitch</span></div>' : ''}`;
+}
+
+function viewersTable(session, live) {
+  const rows = [
+    ['Combined', session.viewers, 'stats-key-all'],
+    ['Kick', session.platforms.kick, 'stats-key-kick'],
+    ['Twitch', session.platforms.twitch, 'stats-key-twitch']
+  ];
+  const cell = (v) => (Number.isFinite(v) ? v.toLocaleString() : '–');
+  return `
+    <table class="stats-viewers">
+      <thead><tr><th>Viewers</th>${live ? '<th>Now</th>' : ''}<th>Avg</th><th>Peak</th></tr></thead>
+      <tbody>${rows.map(([name, v, cls]) => `<tr><th class="${cls}">${name}</th>${live ? `<td>${cell(v.now)}</td>` : ''}<td>${cell(v.avg)}</td><td>${cell(v.peak)}</td></tr>`).join('')}</tbody>
+    </table>`;
 }
 
 function sessionMarkup(session, { live }) {
@@ -69,16 +89,14 @@ function sessionMarkup(session, { live }) {
   parts.push(`<p class="stats-when">${live ? 'Started ' : ''}${formatWhen(session.startedAt)}${session.endedAt ? ` – ${formatWhen(session.endedAt)}` : ''}</p>`);
   parts.push(`<div class="stats-grid">
     ${tile('Duration', formatDuration(session.durationMs))}
-    ${live ? tile('Viewers now', session.viewers.now.toLocaleString()) : ''}
-    ${tile('Avg viewers', session.viewers.avg.toLocaleString())}
-    ${tile('Peak viewers', session.viewers.peak.toLocaleString())}
     ${tile('Chat messages', session.messages.total.toLocaleString(), `${perMin}/min`)}
     ${tile('Unique chatters', session.chatters.toLocaleString())}
   </div>`);
+  parts.push(viewersTable(session, live));
   parts.push(chartMarkup(session.samples));
   parts.push(`<div class="stats-platforms">
-    <span><b>Kick</b> avg ${session.platforms.kick.avg} · peak ${session.platforms.kick.peak} · ${session.messages.kick} msgs</span>
-    <span><b>Twitch</b> avg ${session.platforms.twitch.avg} · peak ${session.platforms.twitch.peak} · ${session.messages.twitch} msgs</span>
+    <span><b>Kick</b> ${session.messages.kick.toLocaleString()} msgs</span>
+    <span><b>Twitch</b> ${session.messages.twitch.toLocaleString()} msgs</span>
   </div>`);
   return parts.join('');
 }
