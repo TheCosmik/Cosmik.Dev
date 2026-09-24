@@ -39,6 +39,7 @@ export class ChatRoom {
       while (messages.length > MAX_MESSAGES) messages.shift();
       await this.state.storage.put('messages', messages);
       this.broadcast(message);
+      await this.countForStream(message);
       return new Response('ok');
     }
 
@@ -50,6 +51,20 @@ export class ChatRoom {
     }
 
     return new Response('not found', { status: 404 });
+  }
+
+  // After the broadcast, so counting never delays a message reaching the screen.
+  async countForStream(message) {
+    if (!this.env.STREAM_STATS) return;
+    try {
+      const id = this.env.STREAM_STATS.idFromName('main');
+      await this.env.STREAM_STATS.get(id).fetch('https://stream-stats.internal/message', {
+        method: 'POST',
+        body: JSON.stringify({ platform: message.platform, userId: message.userId })
+      });
+    } catch {
+      // stats are best-effort; never let them break chat
+    }
   }
 
   broadcast(message) {

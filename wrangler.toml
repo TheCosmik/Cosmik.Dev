@@ -38,6 +38,10 @@ class_name = "FinanceStore"
 name = "STORAGE_INDEX"
 class_name = "StorageIndex"
 
+[[durable_objects.bindings]]
+name = "STREAM_STATS"
+class_name = "StreamStats"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["TwitchChatSocket"]
@@ -54,8 +58,12 @@ new_sqlite_classes = ["FinanceStore"]
 tag = "v4"
 new_sqlite_classes = ["StorageIndex"]
 
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["StreamStats"]
+
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/5 * * * *", "* * * * *"]
 
 [vars]
 STORAGE_LIMIT_GB = "100"

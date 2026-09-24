@@ -1,4 +1,4 @@
-import { getCookieValue, requireSession } from '../lib/verify-session.js';
+import { getCookieValue, requireSession, deriveKey } from '../lib/verify-session.js';
 
 const REDIRECT_BASE = 'https://cosmik.dev';
 
@@ -575,8 +575,31 @@ export async function handleChatRecent(request, env) {
   return json({ messages });
 }
 
+// A read-only key for the OBS overlay, derived from SESSION_SECRET so there's
+// nothing extra to configure. It only unlocks the popout page and the chat
+// socket (which is receive-only) -- never moderation or any other API.
+async function overlayKey(env) {
+  return env.SESSION_SECRET ? deriveKey(env.SESSION_SECRET, 'chat-overlay-v1') : null;
+}
+
+export async function hasOverlayKey(url, env) {
+  const provided = url.searchParams.get('key');
+  const expected = await overlayKey(env);
+  return Boolean(provided && expected && (await timingSafeStringEqual(provided, expected)));
+}
+
+export async function handleOverlayUrl(request, env) {
+  if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
+  const key = await overlayKey(env);
+  if (!key) return json({ error: 'not configured' }, 500);
+  const u = new URL(request.url);
+  const origin = u.hostname === 'localhost' || u.hostname === '127.0.0.1' ? u.origin : `https://${u.host}`;
+  return json({ url: `${origin}/chat-popout.html?key=${key}&transparent=1&size=20` });
+}
+
 export async function handleChatSocket(request, env) {
-  if (!(await requireSession(request, env))) return new Response('unauthorized', { status: 401 });
+  const allowed = (await requireSession(request, env)) || (await hasOverlayKey(new URL(request.url), env));
+  if (!allowed) return new Response('unauthorized', { status: 401 });
   if (!env.CHAT_ROOM) return new Response('not configured', { status: 500 });
   return getChatRoom(env).fetch(request);
 }

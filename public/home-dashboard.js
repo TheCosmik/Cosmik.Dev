@@ -16,12 +16,6 @@ function formatBytes(bytes) {
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unit]}`;
 }
 
-function ordinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function daysUntilChargeDay(chargeDay) {
   const now = new Date();
   const today = now.getDate();
@@ -121,13 +115,28 @@ async function renderFinance() {
     return;
   }
 
-  const next = [...subs].sort((a, b) => daysUntilChargeDay(a.chargeDay) - daysUntilChargeDay(b.chargeDay))[0];
-  const daysUntil = daysUntilChargeDay(next.chargeDay);
-  const when = daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `on the ${ordinal(next.chargeDay)}`;
+  const upcoming = subs
+    .map((s) => ({ ...s, daysUntil: daysUntilChargeDay(s.chargeDay) }))
+    .filter((s) => s.daysUntil <= 7)
+    .sort((a, b) => a.daysUntil - b.daysUntil || a.name.localeCompare(b.name));
+  const dueTotal = upcoming.reduce((sum, s) => sum + s.amount, 0);
+
+  const rows = upcoming.map((s) => {
+    const date = new Date();
+    date.setDate(date.getDate() + s.daysUntil);
+    const when = s.daysUntil === 0 ? 'Today' : s.daysUntil === 1 ? 'Tomorrow'
+      : date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    return `
+      <div class="dash-row">
+        <span class="dash-row-label"><span class="dash-when${s.daysUntil <= 1 ? ' is-soon' : ''}">${when}</span>${escapeHtml(s.name)}</span>
+        <span class="dash-value">$${s.amount.toFixed(2)}</span>
+      </div>`;
+  }).join('');
 
   el.innerHTML = `
     <div class="dash-row"><span class="dash-row-label">Monthly total</span><span class="dash-value">$${total.toFixed(2)}</span></div>
-    <div class="dash-muted">Next: ${escapeHtml(next.name)} ${when} ($${next.amount.toFixed(2)})</div>
+    <div class="dash-muted">${upcoming.length ? `Due in the next 7 days · $${dueTotal.toFixed(2)}` : 'Nothing due in the next 7 days.'}</div>
+    ${rows}
   `;
 }
 

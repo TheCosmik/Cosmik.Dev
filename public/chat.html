@@ -17,7 +17,7 @@
   <div class="grain"></div>
   <div class="vignette"></div>
 
-  <a href="/" class="back-link">
+  <a href="/api/logout" class="back-link">
     <svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 12H5M11 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Exit
   </a>
@@ -44,6 +44,14 @@
           <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
           <span class="chat-size-label chat-size-label-lg">A</span>
         </div>
+        <button id="chat-stats-btn" class="chat-popout-btn chat-stats-btn" title="Stream stats and past streams">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Stats<span class="chat-stats-live">LIVE</span>
+        </button>
+        <button id="chat-obs-btn" class="chat-popout-btn" title="Copy a transparent, read-only chat link for an OBS Browser Source">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          OBS link
+        </button>
         <button id="chat-popout-btn" class="chat-popout-btn" title="Open chat in a separate window">
           <svg viewBox="0 0 24 24" width="14" height="14"><path d="M14 4h6v6M20 4l-8 8M6 4H4v16h16v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Pop out
@@ -62,7 +70,19 @@
     <button data-action="delete">Delete message</button>
   </div>
 
+  <div id="stats-modal" class="modal-overlay">
+    <div class="modal-panel stats-panel">
+      <button id="stats-close" class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="stats-title" class="modal-title">Stream stats</h2>
+      <button id="stats-back" class="stats-back" hidden>← Back to live</button>
+      <div id="stats-body" class="stats-body"></div>
+      <h3 id="stats-subtitle" class="stats-subtitle">Past streams</h3>
+      <div id="stats-history" class="stats-history"></div>
+    </div>
+  </div>
+
   <script src="background.js"></script>
   <script src="chat.js"></script>
+  <script src="stream-stats.js"></script>
 </body>
 </html>

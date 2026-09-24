@@ -47,6 +47,18 @@ if (params.get('connected')) {
   history.replaceState({}, '', '/chat.html');
 }
 
+// OBS/overlay mode: authenticated by a read-only key in the URL instead of
+// a login cookie (OBS's browser doesn't share yours), no moderation, and
+// optionally transparent so it sits over the stream.
+const overlayKey = params.get('key');
+if (params.get('transparent') === '1') document.documentElement.classList.add('overlay-transparent');
+const sizeParam = Number(params.get('size'));
+if (sizeParam >= 10 && sizeParam <= 48) {
+  document.documentElement.style.setProperty('--chat-font-size', `${sizeParam}px`);
+}
+
+const MAX_FEED_ROWS = 300;
+
 document.getElementById('chat-popout-btn')?.addEventListener('click', () => {
   const w = 380;
   const h = 640;
@@ -135,6 +147,7 @@ function renderMessage(msg) {
 }
 
 function openMenu(e, msg) {
+  if (overlayKey) return;
   selected = msg;
   menuEl.style.left = `${e.clientX}px`;
   menuEl.style.top = `${e.clientY}px`;
@@ -186,6 +199,13 @@ function addMessages(messages) {
     feedEl.appendChild(renderMessage(msg));
   }
 
+  // Without this a window left open for a whole stream (a popout, an OBS
+  // source) keeps every message ever received in the DOM forever.
+  while (feedEl.children.length > MAX_FEED_ROWS) {
+    knownIds.delete(feedEl.firstElementChild.dataset.messageId);
+    feedEl.removeChild(feedEl.firstElementChild);
+  }
+
   if (nearBottom) feedEl.scrollTop = feedEl.scrollHeight;
 }
 
@@ -194,7 +214,8 @@ let reconnectTimer = null;
 
 function connectChatSocket() {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  chatSocket = new WebSocket(`${protocol}//${location.host}/api/chat/socket`);
+  const keyQuery = overlayKey ? `?key=${encodeURIComponent(overlayKey)}` : '';
+  chatSocket = new WebSocket(`${protocol}//${location.host}/api/chat/socket${keyQuery}`);
 
   chatSocket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
@@ -243,6 +264,23 @@ async function pollStatus() {
   }
 }
 
-pollStatus();
+document.getElementById('chat-obs-btn')?.addEventListener('click', async () => {
+  try {
+    const res = await fetch('/api/chat/overlay-url');
+    if (!res.ok) throw new Error('failed');
+    const { url } = await res.json();
+    await navigator.clipboard.writeText(url);
+    bannerEl.textContent = 'OBS link copied. Paste it into a Browser Source (width 400, height 700).';
+    bannerEl.classList.remove('error');
+  } catch {
+    bannerEl.textContent = 'Could not copy the OBS link.';
+    bannerEl.classList.add('error');
+  }
+  bannerEl.classList.add('show');
+});
+
+if (!overlayKey) {
+  pollStatus();
+  setInterval(pollStatus, 15000);
+}
 connectChatSocket();
-setInterval(pollStatus, 15000);

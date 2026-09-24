@@ -14,7 +14,9 @@ import {
   handleChatStatus,
   handleChatModerate,
   handleTwitchSocketStatus,
-  handleChatSocket
+  handleChatSocket,
+  handleOverlayUrl,
+  hasOverlayKey
 } from './chat.js';
 import {
   handleFinanceList,
@@ -40,6 +42,8 @@ import {
   handlePreviewProxy,
   cleanupStalePendingUploads
 } from './storage.js';
+import { handleStreamCurrent, handleStreamHistory, handleStreamSession } from './stream.js';
+export { StreamStats } from './stream-stats.js';
 export { TwitchChatSocket } from './twitch-socket.js';
 export { ChatRoom } from './chat-room.js';
 export { FinanceStore } from './finance-store.js';
@@ -133,6 +137,18 @@ async function handleLogin(request, env) {
   );
 }
 
+function handleLogout(request) {
+  const origin = new URL(request.url).origin;
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: `${origin}/`,
+      'Cache-Control': 'no-store',
+      'Set-Cookie': 'site_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
+    }
+  });
+}
+
 async function handleClick(request, env) {
   if (request.method !== 'POST' || !env.COSMIK_KV) {
     return json({ ok: false }, 405);
@@ -206,54 +222,86 @@ async function getTwitchToken(env) {
   }
 }
 
-async function getTwitchLive(env) {
-  if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return false;
+// Returns { ok, live, viewers, title }. ok:false means "couldn't tell" (API
+// error), which callers must not confuse with "offline" -- treating a blip as
+// offline would end a stream early or re-announce it as newly live.
+async function getTwitchInfo(env) {
+  if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) return { ok: false, live: false };
   const token = await getTwitchToken(env);
-  if (!token) return false;
+  if (!token) return { ok: false, live: false };
 
   try {
     const res = await fetch('https://api.twitch.tv/helix/streams?user_login=C0smiik', {
       headers: { 'Client-Id': env.TWITCH_CLIENT_ID, Authorization: `Bearer ${token}` }
     });
-    if (!res.ok) return false;
+    if (!res.ok) return { ok: false, live: false };
     const data = await res.json();
-    return Array.isArray(data.data) && data.data.length > 0;
+    const stream = Array.isArray(data.data) ? data.data[0] : null;
+    return stream
+      ? { ok: true, live: true, viewers: stream.viewer_count || 0, title: stream.title || null }
+      : { ok: true, live: false };
   } catch {
-    return false;
+    return { ok: false, live: false };
   }
 }
 
-async function getKickStream() {
+async function getTwitchLive(env) {
+  return (await getTwitchInfo(env)).live;
+}
+
+async function getKickInfo() {
   try {
     const res = await fetch('https://kick.com/api/v2/channels/cosmik', {
       headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' }
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { ok: false, live: false };
     const data = await res.json();
-    return data && data.livestream ? data.livestream : null;
+    const stream = data && data.livestream;
+    return stream
+      ? {
+          ok: true,
+          live: true,
+          viewers: stream.viewer_count || 0,
+          title: stream.session_title || null,
+          thumbnailUrl: stream.thumbnail?.url || null
+        }
+      : { ok: true, live: false };
   } catch {
-    return null;
+    return { ok: false, live: false };
   }
 }
 
-async function checkAndNotifyLive(env, ctx) {
+async function runLiveChecks(env, ctx) {
+  const [kick, twitch] = await Promise.all([getKickInfo(), getTwitchInfo(env)]);
+
+  if (env.STREAM_STATS) {
+    const id = env.STREAM_STATS.idFromName('main');
+    ctx.waitUntil(
+      env.STREAM_STATS.get(id).fetch('https://stream-stats.internal/tick', {
+        method: 'POST',
+        body: JSON.stringify({ now: Date.now(), kick, twitch })
+      })
+    );
+  }
+
+  await notifyLive(env, ctx, kick, twitch);
+}
+
+async function notifyLive(env, ctx, kick, twitch) {
   if (!env.DISCORD_WEBHOOK_URL || !env.COSMIK_KV) return;
 
-  const [kickStream, twitchLive] = await Promise.all([getKickStream(), getTwitchLive(env)]);
   const platforms = [
-    {
-      key: 'kick',
-      live: Boolean(kickStream),
-      thumbnailUrl: kickStream?.thumbnail?.url || null
-    },
+    { key: 'kick', ok: kick.ok, live: kick.live, thumbnailUrl: kick.thumbnailUrl || null },
     {
       key: 'twitch',
-      live: twitchLive,
+      ok: twitch.ok,
+      live: twitch.live,
       thumbnailUrl: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_c0smiik-440x248.jpg'
     }
   ];
 
   for (const platform of platforms) {
+    if (!platform.ok) continue;
     const kvKey = `live_state:${platform.key}`;
     const wasLive = (await env.COSMIK_KV.get(kvKey)) === '1';
     if (platform.live && !wasLive) {
@@ -329,6 +377,10 @@ export default {
       return handleLogin(request, env);
     }
 
+    if (url.pathname === '/api/logout') {
+      return handleLogout(request);
+    }
+
     if (url.pathname === '/api/status') {
       return handleStatus(request, env, ctx);
     }
@@ -391,6 +443,22 @@ export default {
 
     if (url.pathname === '/api/chat/twitch-socket-status') {
       return handleTwitchSocketStatus(request, env);
+    }
+
+    if (url.pathname === '/api/stream/current') {
+      return handleStreamCurrent(request, env);
+    }
+
+    if (url.pathname === '/api/stream/history') {
+      return handleStreamHistory(request, env);
+    }
+
+    if (url.pathname === '/api/stream/session') {
+      return handleStreamSession(request, env);
+    }
+
+    if (url.pathname === '/api/chat/overlay-url') {
+      return handleOverlayUrl(request, env);
     }
 
     if (url.pathname === '/api/chat/socket') {
@@ -473,11 +541,13 @@ export default {
       return handlePreviewProxy(request, env);
     }
 
-    if (GATED_PAGES.has(gatedPageName(url.pathname))) {
+    const pageName = gatedPageName(url.pathname);
+    if (GATED_PAGES.has(pageName)) {
       const cookieHeader = request.headers.get('cookie') || '';
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));
-      if (!valid) {
+      const overlayOk = !valid && pageName === 'chat-popout' && (await hasOverlayKey(url, env));
+      if (!valid && !overlayOk) {
         return Response.redirect(`${url.origin}/`, 302);
       }
     }
@@ -493,6 +563,11 @@ export default {
       }
       ctx.waitUntil(cleanupStalePendingUploads(env));
     }
-    ctx.waitUntil(checkAndNotifyLive(env, ctx));
+    // Each cron trigger fires this handler separately, so live checks are
+    // pinned to the every-minute one; otherwise they'd run twice (racing on
+    // the Discord dedupe state) whenever the two schedules coincide.
+    if (event.cron === '* * * * *') {
+      ctx.waitUntil(runLiveChecks(env, ctx));
+    }
   }
 };
