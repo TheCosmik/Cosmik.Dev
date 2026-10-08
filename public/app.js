@@ -39,7 +39,6 @@ fetch('/api/status')
   })
   .catch(() => {});
 
-const trigger = document.getElementById('secret-trigger');
 const modal = document.getElementById('unlock-modal');
 const panel = document.querySelector('.unlock-panel');
 const form = document.getElementById('unlock-form');
@@ -59,7 +58,40 @@ function closeModal() {
   modal.classList.remove('open');
 }
 
-trigger.addEventListener('click', openModal);
+// The unlock box has no visible entry point: it opens after Right, Right, Left,
+// Right (arrow keys on a keyboard, or swipes on a touch screen).
+const UNLOCK_SEQUENCE = ['right', 'right', 'left', 'right'];
+let recentMoves = [];
+
+function registerMove(move) {
+  if (modal.classList.contains('open')) return;
+  recentMoves.push(move);
+  recentMoves = recentMoves.slice(-UNLOCK_SEQUENCE.length);
+  if (recentMoves.join() === UNLOCK_SEQUENCE.join()) {
+    recentMoves = [];
+    openModal();
+  }
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') registerMove('right');
+  else if (e.key === 'ArrowLeft') registerMove('left');
+  else if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) recentMoves = [];
+});
+
+let swipeStart = null;
+window.addEventListener('touchstart', (e) => {
+  swipeStart = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+}, { passive: true });
+window.addEventListener('touchend', (e) => {
+  if (!swipeStart) return;
+  const dx = e.changedTouches[0].clientX - swipeStart.x;
+  const dy = e.changedTouches[0].clientY - swipeStart.y;
+  swipeStart = null;
+  if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  registerMove(dx > 0 ? 'right' : 'left');
+}, { passive: true });
+
 closeBtn.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeModal();

@@ -51,22 +51,6 @@ html, body {
   background: radial-gradient(ellipse at center, transparent 35%, rgba(3, 4, 3, 0.6) 100%);
 }
 
-/* Secret unlock trigger — visually just part of the ambient glow */
-
-.secret-orb {
-  position: fixed;
-  top: -6vw;
-  left: -6vw;
-  width: 26vw;
-  height: 26vw;
-  min-width: 200px;
-  min-height: 200px;
-  max-width: 340px;
-  max-height: 340px;
-  border-radius: 50%;
-  z-index: 5;
-}
-
 /* Profile / link-in-bio page */
 
 .profile {
