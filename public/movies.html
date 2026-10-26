@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmik — Movies</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07090a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <a href="/api/logout" class="back-link">
+    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 12H5M11 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Exit
+  </a>
+
+  <nav class="page-tabs">
+    <a href="/home.html" class="page-tab">Home</a>
+    <a href="/projects.html" class="page-tab">Projects</a>
+    <a href="/chat.html" class="page-tab">Live Stream</a>
+    <a href="/movies.html" class="page-tab is-active">Movies</a>
+    <a href="/finance.html" class="page-tab">Finances</a>
+    <a href="/storage.html" class="page-tab">Storage</a>
+  </nav>
+
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Movies</h1>
+      <p class="dashboard-sub">Where to watch and where to save.</p>
+    </div>
+    <div class="project-grid">
+      <a class="project-card" href="https://moviesanywhere.com/" target="_blank" rel="noopener">
+        <span class="project-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 5h16v14H4zM4 9h16M8 5v4M12 5v4M16 5v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="project-name">Movies Anywhere</span>
+        <span class="project-tagline">Your digital movie library, all in one place.</span>
+      </a>
+      <a class="project-card" href="https://fanflix.co/" target="_blank" rel="noopener">
+        <span class="project-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="project-name">Movie Bundle Deals</span>
+        <span class="project-tagline">Find discounted movie bundles.</span>
+      </a>
+    </div>
+  </main>
+
+  <script src="background.js"></script>
+</body>
+</html>

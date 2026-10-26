@@ -428,6 +428,7 @@ html, body {
   border: 1px solid var(--border-soft);
   border-radius: 12px;
   color: var(--text);
+  text-decoration: none;
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.25s ease, background 0.25s ease, transform 0.15s ease;
