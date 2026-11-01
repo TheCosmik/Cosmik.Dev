@@ -1,4 +1,5 @@
 import { requireSession } from '../lib/verify-session.js';
+import { isAllowedPoster } from './media.js';
 
 const MAX_TITLE_LENGTH = 120;
 
@@ -40,7 +41,11 @@ export function handleWatchlistList(request, env) {
 export function handleWatchlistAdd(request, env) {
   return forward(request, env, '/add', (body) => {
     const title = typeof body.title === 'string' ? body.title.trim().slice(0, MAX_TITLE_LENGTH) : '';
-    return title ? { title } : null;
+    if (!title) return null;
+    const year = Number.isInteger(body.year) && body.year >= 1870 && body.year <= 2200 ? body.year : null;
+    const kind = body.kind === 'movie' || body.kind === 'show' ? body.kind : null;
+    const poster = typeof body.poster === 'string' && isAllowedPoster(body.poster) ? body.poster : null;
+    return { title, year, kind, poster };
   });
 }
 

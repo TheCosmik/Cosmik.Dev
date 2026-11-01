@@ -30,6 +30,8 @@ import {
   handleWatchlistToggle,
   handleWatchlistDelete
 } from './watchlist.js';
+import { handleMediaSearch } from './media.js';
+import { handleClipsList, handleClipsAdd, handleClipsDelete } from './clips.js';
 import {
   handleStorageState,
   handleFolderCreate,
@@ -54,13 +56,14 @@ export { TwitchChatSocket } from './twitch-socket.js';
 export { ChatRoom } from './chat-room.js';
 export { FinanceStore } from './finance-store.js';
 export { WatchlistStore } from './watchlist-store.js';
+export { ClipsStore } from './clips-store.js';
 export { StorageIndex } from './storage-index.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_SECONDS = 300; // 5 minutes
 const TRACKED_LINKS = ['kick', 'twitch', 'x', 'discord'];
-const GATED_PAGES = new Set(['home', 'projects', 'chat', 'chat-popout', 'finance', 'storage', 'movies']);
+const GATED_PAGES = new Set(['home', 'projects', 'chat', 'chat-popout', 'finance', 'storage', 'watching', 'clips']);
 
 // Cloudflare's asset serving resolves clean URLs (e.g. /chat) straight to
 // their .html file, so the gate has to recognize every spelling a request
@@ -502,6 +505,22 @@ export default {
 
     if (url.pathname === '/api/watchlist/delete') {
       return handleWatchlistDelete(request, env);
+    }
+
+    if (url.pathname === '/api/media/search') {
+      return handleMediaSearch(request, env);
+    }
+
+    if (url.pathname === '/api/clips/list') {
+      return handleClipsList(request, env);
+    }
+
+    if (url.pathname === '/api/clips/add') {
+      return handleClipsAdd(request, env, getTwitchToken);
+    }
+
+    if (url.pathname === '/api/clips/delete') {
+      return handleClipsDelete(request, env);
     }
 
     if (url.pathname === '/api/storage/state') {

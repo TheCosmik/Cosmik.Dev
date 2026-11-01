@@ -31,8 +31,21 @@ export class WatchlistStore {
     }
 
     if (url.pathname === '/add') {
-      if (this.items.length >= MAX_ITEMS) return this.json({ error: 'list is full' }, 409);
-      const item = { id: crypto.randomUUID(), title: body.title, watched: false, addedAt: Date.now(), watchedAt: null };
+      if (this.items.length >= MAX_ITEMS) return this.json({ error: 'full' }, 409);
+      const sameTitle = (i) => i.title.toLowerCase() === body.title.toLowerCase() && (i.year || null) === (body.year || null);
+      const duplicate = this.items.find(sameTitle);
+      if (duplicate) return this.json({ error: 'duplicate', watched: duplicate.watched }, 409);
+
+      const item = {
+        id: crypto.randomUUID(),
+        title: body.title,
+        year: body.year || null,
+        kind: body.kind || null,
+        poster: body.poster || null,
+        watched: false,
+        addedAt: Date.now(),
+        watchedAt: null
+      };
       this.items.push(item);
       await this.save();
       return this.json(item);

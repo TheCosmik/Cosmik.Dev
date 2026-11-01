@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cosmik — Movies</title>
+<title>Cosmik — Watching</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#07090a">
@@ -26,15 +26,16 @@
     <a href="/home.html" class="page-tab">Home</a>
     <a href="/projects.html" class="page-tab">Projects</a>
     <a href="/chat.html" class="page-tab">Live Stream</a>
-    <a href="/movies.html" class="page-tab is-active">Movies</a>
+    <a href="/clips.html" class="page-tab">Clips</a>
+    <a href="/watching.html" class="page-tab is-active">Watching</a>
     <a href="/finance.html" class="page-tab">Finances</a>
     <a href="/storage.html" class="page-tab">Storage</a>
   </nav>
 
   <main class="dashboard">
     <div class="dashboard-header">
-      <h1 class="dashboard-title">Movies</h1>
-      <p class="dashboard-sub">Where to watch and where to save.</p>
+      <h1 class="dashboard-title">Watching</h1>
+      <p class="dashboard-sub">Movies and shows to watch, and where to find them.</p>
     </div>
     <div class="project-grid">
       <a class="project-card" href="https://moviesanywhere.com/" target="_blank" rel="noopener">
@@ -61,19 +62,24 @@
     </div>
 
     <section class="watch">
-      <h2 class="watch-title">Watchlist</h2>
-      <form id="watch-form" class="watch-form" autocomplete="off">
-        <input id="watch-input" type="text" maxlength="120" placeholder="Add a movie you want to watch" aria-label="Movie title" required>
-        <button type="submit" class="finance-add-btn">Add</button>
+      <form id="watch-form" class="watch-add" autocomplete="off">
+        <div class="watch-add-row">
+          <input id="watch-input" type="text" maxlength="120" placeholder="Search a movie or show to add" aria-label="Movie or show title" role="combobox" aria-expanded="false" aria-controls="watch-results" required>
+          <button type="submit" class="finance-add-btn">Add</button>
+        </div>
+        <div id="watch-results" class="watch-results" role="listbox" hidden></div>
       </form>
       <p id="watch-error" class="finance-form-error"></p>
-      <div id="watch-list" class="watch-list"></div>
-      <h3 id="watch-done-title" class="watch-done-title" hidden>Watched</h3>
-      <div id="watch-done" class="watch-list"></div>
+
+      <div class="watch-tabs" role="tablist">
+        <button id="watch-tab-todo" class="watch-tab is-active" role="tab" aria-selected="true">Watchlist <span id="watch-count-todo">0</span></button>
+        <button id="watch-tab-done" class="watch-tab" role="tab" aria-selected="false">Watched <span id="watch-count-done">0</span></button>
+      </div>
+      <div id="watch-grid" class="watch-grid"></div>
     </section>
   </main>
 
   <script src="background.js"></script>
-  <script src="movies.js"></script>
+  <script src="watching.js"></script>
 </body>
 </html>
