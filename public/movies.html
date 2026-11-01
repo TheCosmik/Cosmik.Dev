@@ -59,8 +59,21 @@
         <span class="project-tagline">Track digital movie price drops and sales.</span>
       </a>
     </div>
+
+    <section class="watch">
+      <h2 class="watch-title">Watchlist</h2>
+      <form id="watch-form" class="watch-form" autocomplete="off">
+        <input id="watch-input" type="text" maxlength="120" placeholder="Add a movie you want to watch" aria-label="Movie title" required>
+        <button type="submit" class="finance-add-btn">Add</button>
+      </form>
+      <p id="watch-error" class="finance-form-error"></p>
+      <div id="watch-list" class="watch-list"></div>
+      <h3 id="watch-done-title" class="watch-done-title" hidden>Watched</h3>
+      <div id="watch-done" class="watch-list"></div>
+    </section>
   </main>
 
   <script src="background.js"></script>
+  <script src="movies.js"></script>
 </body>
 </html>

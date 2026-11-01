@@ -25,6 +25,12 @@ import {
   handleFinanceDelete
 } from './finance.js';
 import {
+  handleWatchlistList,
+  handleWatchlistAdd,
+  handleWatchlistToggle,
+  handleWatchlistDelete
+} from './watchlist.js';
+import {
   handleStorageState,
   handleFolderCreate,
   handleFolderRename,
@@ -47,6 +53,7 @@ export { StreamStats } from './stream-stats.js';
 export { TwitchChatSocket } from './twitch-socket.js';
 export { ChatRoom } from './chat-room.js';
 export { FinanceStore } from './finance-store.js';
+export { WatchlistStore } from './watchlist-store.js';
 export { StorageIndex } from './storage-index.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -479,6 +486,22 @@ export default {
 
     if (url.pathname === '/api/finance/delete') {
       return handleFinanceDelete(request, env);
+    }
+
+    if (url.pathname === '/api/watchlist/list') {
+      return handleWatchlistList(request, env);
+    }
+
+    if (url.pathname === '/api/watchlist/add') {
+      return handleWatchlistAdd(request, env);
+    }
+
+    if (url.pathname === '/api/watchlist/toggle') {
+      return handleWatchlistToggle(request, env);
+    }
+
+    if (url.pathname === '/api/watchlist/delete') {
+      return handleWatchlistDelete(request, env);
     }
 
     if (url.pathname === '/api/storage/state') {

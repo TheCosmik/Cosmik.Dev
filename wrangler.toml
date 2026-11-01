@@ -35,6 +35,10 @@ name = "FINANCE_STORE"
 class_name = "FinanceStore"
 
 [[durable_objects.bindings]]
+name = "WATCHLIST_STORE"
+class_name = "WatchlistStore"
+
+[[durable_objects.bindings]]
 name = "STORAGE_INDEX"
 class_name = "StorageIndex"
 
@@ -61,6 +65,10 @@ new_sqlite_classes = ["StorageIndex"]
 [[migrations]]
 tag = "v5"
 new_sqlite_classes = ["StreamStats"]
+
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["WatchlistStore"]
 
 [triggers]
 crons = ["*/5 * * * *", "* * * * *"]

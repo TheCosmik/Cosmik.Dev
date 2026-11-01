@@ -1463,6 +1463,117 @@ html.overlay-transparent .chat-row {
   width: 100%;
 }
 
+.watch {
+  width: min(880px, 100%);
+  margin-top: 44px;
+}
+
+.watch-title,
+.watch-done-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.watch-done-title {
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.watch-done-title[hidden] {
+  display: none;
+}
+
+.watch-form {
+  display: flex;
+  gap: 10px;
+}
+
+.watch-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.watch-form input:focus {
+  border-color: var(--green-dim);
+}
+
+.watch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.watch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+
+.watch-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.watch-row.is-watched .watch-name {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.watch-check,
+.watch-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.watch-check:hover {
+  border-color: var(--green-dim);
+}
+
+.watch-row.is-watched .watch-check {
+  color: #04150a;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.watch-delete:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
 .finance-field {
   display: flex;
   flex-direction: column;
