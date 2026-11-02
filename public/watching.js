@@ -304,4 +304,10 @@ formEl.addEventListener('submit', async (e) => {
   choose(highlight >= 0 ? highlight : results.length);
 });
 
+// Lets wheel.js read the lists and mark a pick as watched.
+window.watchApi = {
+  getItems: () => items,
+  markWatched: (id) => change('/api/watchlist/toggle', { id, watched: true })
+};
+
 load();

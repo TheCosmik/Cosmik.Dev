@@ -71,9 +71,15 @@
       <p id="watch-error" class="finance-form-error"></p>
 
       <div class="watch-toolbar">
-        <div class="watch-tabs" role="tablist">
-          <button id="watch-tab-todo" class="watch-tab is-active" role="tab" aria-selected="true">Watchlist <span id="watch-count-todo">0</span></button>
-          <button id="watch-tab-done" class="watch-tab" role="tab" aria-selected="false">Watched <span id="watch-count-done">0</span></button>
+        <div class="watch-toolbar-left">
+          <div class="watch-tabs" role="tablist">
+            <button id="watch-tab-todo" class="watch-tab is-active" role="tab" aria-selected="true">Watchlist <span id="watch-count-todo">0</span></button>
+            <button id="watch-tab-done" class="watch-tab" role="tab" aria-selected="false">Watched <span id="watch-count-done">0</span></button>
+          </div>
+          <button id="wheel-open" class="watch-spin-open" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v9l6.4 6.4M12 12L5.6 18.4M12 12h9M12 12H3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Spin the wheel
+          </button>
         </div>
         <input id="watch-filter" class="watch-filter" type="search" placeholder="Search your lists" aria-label="Search your lists by name" autocomplete="off" spellcheck="false">
       </div>
@@ -81,7 +87,31 @@
     </section>
   </main>
 
+  <div id="wheel-modal" class="modal-overlay">
+    <div class="modal-panel wheel-panel" role="dialog" aria-modal="true" aria-labelledby="wheel-title">
+      <div class="wheel-head">
+        <h2 id="wheel-title" class="wheel-title">Spin for tonight's pick</h2>
+        <button id="wheel-close" class="wheel-close" type="button" aria-label="Close the wheel">✕ Close</button>
+      </div>
+      <div id="wheel-kinds" class="wheel-kinds"></div>
+      <p id="wheel-note" class="wheel-note"></p>
+      <div id="wheel-stage" class="wheel-stage"><canvas id="wheel-canvas" aria-label="Wheel of movies and shows from your watchlist"></canvas></div>
+      <div id="wheel-result" class="wheel-result" hidden>
+        <img id="wheel-result-art" class="wheel-result-art" alt="" referrerpolicy="no-referrer" hidden>
+        <div class="wheel-result-text">
+          <span class="wheel-result-label">Tonight's pick</span>
+          <strong id="wheel-result-title"></strong>
+          <span id="wheel-result-meta"></span>
+        </div>
+        <button id="wheel-mark-watched" class="watch-act primary" type="button">✓ Mark watched</button>
+      </div>
+      <button id="wheel-spin" class="finance-add-btn wheel-spin" type="button" disabled>Spin the wheel</button>
+    </div>
+  </div>
+
   <script src="background.js"></script>
   <script src="watching.js"></script>
+  <script src="wheel-math.js"></script>
+  <script src="wheel.js"></script>
 </body>
 </html>
