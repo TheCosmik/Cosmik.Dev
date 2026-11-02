@@ -2445,3 +2445,7 @@ html.overlay-transparent .chat-row {
     justify-content: flex-end;
   }
 }
+
+.watch.watch-solo {
+  margin-top: 0;
+}

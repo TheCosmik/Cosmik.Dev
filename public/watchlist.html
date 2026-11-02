@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmik — Watchlist</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07090a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <a href="/api/logout" class="back-link">
+    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 12H5M11 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Exit
+  </a>
+
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Watchlist</h1>
+      <p class="dashboard-sub">Movies and shows we want to watch.</p>
+    </div>
+    <section class="watch watch-solo">
+      <form id="watch-form" class="watch-add" autocomplete="off">
+        <div class="watch-add-row">
+          <input id="watch-input" type="text" maxlength="120" placeholder="Search a movie or show to add" aria-label="Movie or show title" role="combobox" aria-expanded="false" aria-controls="watch-results" required>
+          <button type="submit" class="finance-add-btn">Add</button>
+        </div>
+        <div id="watch-results" class="watch-results" role="listbox" hidden></div>
+      </form>
+      <p id="watch-error" class="finance-form-error"></p>
+
+      <div class="watch-tabs" role="tablist">
+        <button id="watch-tab-todo" class="watch-tab is-active" role="tab" aria-selected="true">Watchlist <span id="watch-count-todo">0</span></button>
+        <button id="watch-tab-done" class="watch-tab" role="tab" aria-selected="false">Watched <span id="watch-count-done">0</span></button>
+      </div>
+      <div id="watch-grid" class="watch-grid"></div>
+    </section>
+  </main>
+
+  <script src="background.js"></script>
+  <script src="watching.js"></script>
+</body>
+</html>

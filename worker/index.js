@@ -2,7 +2,10 @@ import {
   signSessionToken,
   verifySessionToken,
   timingSafeStringEqual,
-  getCookieValue
+  getCookieValue,
+  GUEST_COOKIE,
+  signGuestToken,
+  hasGuestSession
 } from '../lib/verify-session.js';
 import {
   handleAuthStart,
@@ -60,10 +63,13 @@ export { ClipsStore } from './clips-store.js';
 export { StorageIndex } from './storage-index.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
+// The shared-watchlist guest is low-risk and uses a phone, so the cookie
+// lasts longer than the owner's session-only one.
+const GUEST_SESSION_SECONDS = 60 * 60 * 24 * 30; // 30 days
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_SECONDS = 300; // 5 minutes
 const TRACKED_LINKS = ['kick', 'twitch', 'x', 'discord'];
-const GATED_PAGES = new Set(['home', 'projects', 'chat', 'chat-popout', 'finance', 'storage', 'watching', 'clips']);
+const GATED_PAGES = new Set(['home', 'projects', 'chat', 'chat-popout', 'finance', 'storage', 'watching', 'clips', 'watchlist']);
 
 // Cloudflare's asset serving resolves clean URLs (e.g. /chat) straight to
 // their .html file, so the gate has to recognize every spelling a request
@@ -124,19 +130,35 @@ async function handleLogin(request, env) {
   }
 
   const password = body && body.password;
-  if (!password || !(await timingSafeStringEqual(password, expectedPassword))) {
+  // Both comparisons always run so timing doesn't reveal which code was close.
+  const isOwner = Boolean(password) && (await timingSafeStringEqual(password, expectedPassword));
+  const isGuest = Boolean(password) && Boolean(env.GUEST_PASSWORD) &&
+    (await timingSafeStringEqual(password, env.GUEST_PASSWORD));
+  if (!isOwner && !isGuest) {
     await recordLoginFailure(env, ip, failCount);
     return json({ ok: false }, 401);
   }
 
   await clearLoginFailures(env, ip);
 
+  if (!isOwner) {
+    const guestExpiry = Math.floor(Date.now() / 1000) + GUEST_SESSION_SECONDS;
+    const guestToken = await signGuestToken(env, guestExpiry);
+    return json(
+      { ok: true, role: 'guest' },
+      200,
+      {
+        'Set-Cookie': `${GUEST_COOKIE}=${guestToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${GUEST_SESSION_SECONDS}`
+      }
+    );
+  }
+
   const expiry = Math.floor(Date.now() / 1000) + SESSION_DURATION_SECONDS;
   const signature = await signSessionToken(sessionSecret, expiry);
   const token = `${expiry}.${signature}`;
 
   return json(
-    { ok: true },
+    { ok: true, role: 'owner' },
     200,
     {
       // No Max-Age/Expires: this is a session cookie so closing the browser
@@ -149,14 +171,11 @@ async function handleLogin(request, env) {
 
 function handleLogout(request) {
   const origin = new URL(request.url).origin;
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: `${origin}/`,
-      'Cache-Control': 'no-store',
-      'Set-Cookie': 'site_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
-    }
-  });
+  const headers = new Headers({ Location: `${origin}/`, 'Cache-Control': 'no-store' });
+  for (const name of ['site_auth', GUEST_COOKIE]) {
+    headers.append('Set-Cookie', `${name}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+  }
+  return new Response(null, { status: 302, headers });
 }
 
 async function handleClick(request, env) {
@@ -589,7 +608,9 @@ export default {
       const token = getCookieValue(cookieHeader, 'site_auth');
       const valid = env.SESSION_SECRET && (await verifySessionToken(token, env.SESSION_SECRET));
       const overlayOk = !valid && pageName === 'chat-popout' && (await hasOverlayKey(url, env));
-      if (!valid && !overlayOk) {
+      // The shared watchlist page is the only page a guest login may open.
+      const guestOk = !valid && pageName === 'watchlist' && (await hasGuestSession(request, env));
+      if (!valid && !overlayOk && !guestOk) {
         return Response.redirect(`${url.origin}/`, 302);
       }
     }

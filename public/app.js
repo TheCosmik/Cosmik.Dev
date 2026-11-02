@@ -123,10 +123,11 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) throw new Error('denied');
 
+    const { role } = await res.json().catch(() => ({}));
     message.textContent = 'ACCESS GRANTED';
     message.classList.add('show', 'granted');
     setTimeout(() => {
-      window.location.href = 'home.html';
+      window.location.href = role === 'guest' ? 'watchlist.html' : 'home.html';
     }, 600);
   } catch {
     message.textContent = 'ACCESS DENIED';

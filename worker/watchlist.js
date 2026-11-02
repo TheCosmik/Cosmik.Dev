@@ -1,4 +1,4 @@
-import { requireSession } from '../lib/verify-session.js';
+import { requireWatchlistAccess } from '../lib/verify-session.js';
 import { isAllowedPoster } from './media.js';
 
 const MAX_TITLE_LENGTH = 120;
@@ -18,7 +18,7 @@ async function readBody(request) {
 // Runs the session + config checks shared by every watchlist route, then
 // forwards the validated payload to the Durable Object.
 async function forward(request, env, path, buildPayload) {
-  if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
+  if (!(await requireWatchlistAccess(request, env))) return json({ error: 'unauthorized' }, 401);
   if (!env.WATCHLIST_STORE) return json({ error: 'not configured' }, 500);
 
   const init = {};

@@ -1,4 +1,4 @@
-import { requireSession } from '../lib/verify-session.js';
+import { requireWatchlistAccess } from '../lib/verify-session.js';
 
 // Poster art is hotlinked from these hosts only (see isAllowedPoster).
 const POSTER_HOSTS = new Set(['m.media-amazon.com', 'static.tvmaze.com']);
@@ -76,7 +76,7 @@ async function searchTvmaze(query) {
 }
 
 export async function handleMediaSearch(request, env) {
-  if (!(await requireSession(request, env))) return json({ error: 'unauthorized' }, 401);
+  if (!(await requireWatchlistAccess(request, env))) return json({ error: 'unauthorized' }, 401);
 
   const query = (new URL(request.url).searchParams.get('q') || '').trim().slice(0, 80);
   // IMDb's endpoint is keyed by a plain lowercase, accent-free form of the query.
