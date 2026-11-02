@@ -15,6 +15,8 @@ const PLAY_ICON = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="curren
 
 let clips = [];
 let hls = null;
+let cleanupTimer = null;
+let historyEntryAdded = false;
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({
@@ -144,11 +146,24 @@ formEl.addEventListener('submit', async (e) => {
 
 /* ---------- player ---------- */
 
-function stopPlayer() {
+// Stops playback right away (so sound cuts out instantly) but leaves the
+// player's box in place; removeStage() clears it once the fade-out is done.
+function stopPlayback() {
   if (hls) {
     hls.destroy();
     hls = null;
   }
+  const video = stageEl.querySelector('video');
+  if (video) {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
+  const frame = stageEl.querySelector('iframe');
+  if (frame) frame.src = 'about:blank';
+}
+
+function removeStage() {
   stageEl.innerHTML = '';
 }
 
@@ -188,22 +203,46 @@ function playTwitch(clip) {
 }
 
 function openClip(clip) {
-  stopPlayer();
+  clearTimeout(cleanupTimer);
+  stopPlayback();
+  removeStage();
   playerTitleEl.textContent = clip.title;
   playerMetaEl.textContent = metaLine(clip);
   playerLinkEl.href = clip.url;
   playerLinkEl.textContent = `Open on ${PLATFORM_LABEL[clip.platform] || 'site'} ↗`;
   modalEl.classList.add('open');
 
+  // Give the player its own history entry so the browser's Back button (and a
+  // phone's back gesture) closes the clip instead of leaving the whole page.
+  if (!historyEntryAdded) {
+    history.pushState({ clipOpen: true }, '');
+    historyEntryAdded = true;
+  }
+
   if (clip.platform === 'kick' && clip.playUrl) playKick(clip);
   else if (clip.platform === 'twitch') playTwitch(clip);
   else showPlayerMessage('This clip can’t be played here. Use “Open original” instead.');
 }
 
-function closeClip() {
+function hideClip() {
+  stopPlayback();
   modalEl.classList.remove('open');
-  stopPlayer();
+  clearTimeout(cleanupTimer);
+  cleanupTimer = setTimeout(removeStage, 260);
 }
+
+// Every close button/key goes through here; popstate does the real closing so
+// the history entry added in openClip never gets left behind.
+function closeClip() {
+  if (!modalEl.classList.contains('open')) return;
+  if (historyEntryAdded) history.back();
+  else hideClip();
+}
+
+window.addEventListener('popstate', () => {
+  historyEntryAdded = false;
+  if (modalEl.classList.contains('open')) hideClip();
+});
 
 document.getElementById('clip-modal-close').addEventListener('click', closeClip);
 modalEl.addEventListener('click', (e) => {

@@ -23,13 +23,13 @@
   </a>
 
   <nav class="page-tabs">
-    <a href="/home.html" class="page-tab">Home</a>
-    <a href="/projects.html" class="page-tab">Projects</a>
-    <a href="/chat.html" class="page-tab">Live Stream</a>
-    <a href="/clips.html" class="page-tab is-active">Clips</a>
-    <a href="/watching.html" class="page-tab">Watching</a>
-    <a href="/finance.html" class="page-tab">Finances</a>
-    <a href="/storage.html" class="page-tab">Storage</a>
+    <a href="/home" class="page-tab">Home</a>
+    <a href="/projects" class="page-tab">Projects</a>
+    <a href="/chat" class="page-tab">Live Stream</a>
+    <a href="/clips" class="page-tab is-active">Clips</a>
+    <a href="/watching" class="page-tab">Watching</a>
+    <a href="/finance" class="page-tab">Finances</a>
+    <a href="/storage" class="page-tab">Storage</a>
   </nav>
 
   <main class="dashboard">
@@ -50,9 +50,11 @@
 
   <div id="clip-modal" class="modal-overlay">
     <div class="modal-panel clip-panel">
-      <button id="clip-modal-close" class="modal-close" aria-label="Close">&times;</button>
+      <div class="clip-panel-head">
+        <h2 id="clip-player-title" class="clip-player-title"></h2>
+        <button id="clip-modal-close" class="clip-close" type="button" aria-label="Close clip">✕ Close</button>
+      </div>
       <div id="clip-stage"></div>
-      <h2 id="clip-player-title" class="clip-player-title"></h2>
       <div class="clip-player-links">
         <span id="clip-player-meta"></span>
         <a id="clip-player-link" href="#" target="_blank" rel="noopener">Open original ↗</a>

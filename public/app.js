@@ -127,7 +127,7 @@ form.addEventListener('submit', async (e) => {
     message.textContent = 'ACCESS GRANTED';
     message.classList.add('show', 'granted');
     setTimeout(() => {
-      window.location.href = role === 'guest' ? 'watchlist.html' : 'home.html';
+      window.location.href = role === 'guest' ? '/watchlist' : '/home';
     }, 600);
   } catch {
     message.textContent = 'ACCESS DENIED';
