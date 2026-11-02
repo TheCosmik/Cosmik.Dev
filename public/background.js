@@ -16,7 +16,17 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resize();
-window.addEventListener('resize', resize);
+
+// Fullscreen and window drags fire bursts of resize events; rebuilding the
+// full-screen canvas for each one is expensive, so wait for the burst to end.
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    resize();
+    paint();
+  }, 120);
+});
 
 const blobs = [
   { x: 0.14, y: -0.02, r: 0.4, hue: [63, 224, 102], alpha: 0.12, speed: 0.0001, phase: 0 },
@@ -38,7 +48,10 @@ window.addEventListener('mouseleave', () => {
 
 let t = 0;
 
-function draw() {
+let paused = false;
+let frameRequested = false;
+
+function paint() {
   t += 1;
   smoothX += (mouseX - smoothX) * 0.03;
   smoothY += (mouseY - smoothY) * 0.03;
@@ -63,7 +76,32 @@ function draw() {
     ctx.arc(px, py, radius, 0, Math.PI * 2);
     ctx.fill();
   }
-
-  requestAnimationFrame(draw);
 }
-draw();
+
+function loop() {
+  frameRequested = false;
+  if (paused) return;
+  paint();
+  frameRequested = true;
+  requestAnimationFrame(loop);
+}
+
+// Pages that put video on top of the glow (the clip player) pause it: it is
+// hidden behind the overlay anyway and competes with the video for the GPU.
+window.cosmikBackground = {
+  pause() {
+    paused = true;
+  },
+  resume() {
+    if (!paused) return;
+    paused = false;
+    if (!frameRequested) {
+      frameRequested = true;
+      requestAnimationFrame(loop);
+    }
+  }
+};
+
+paint();
+frameRequested = true;
+requestAnimationFrame(loop);

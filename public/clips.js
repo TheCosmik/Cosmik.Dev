@@ -17,6 +17,8 @@ let clips = [];
 let hls = null;
 let cleanupTimer = null;
 let historyEntryAdded = false;
+let pendingPops = 0;
+let lastFullscreenExit = 0;
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({
@@ -206,6 +208,8 @@ function openClip(clip) {
   clearTimeout(cleanupTimer);
   stopPlayback();
   removeStage();
+  document.documentElement.classList.add('clip-open');
+  if (window.cosmikBackground) window.cosmikBackground.pause();
   playerTitleEl.textContent = clip.title;
   playerMetaEl.textContent = metaLine(clip);
   playerLinkEl.href = clip.url;
@@ -225,23 +229,43 @@ function openClip(clip) {
 }
 
 function hideClip() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   stopPlayback();
   modalEl.classList.remove('open');
   clearTimeout(cleanupTimer);
-  cleanupTimer = setTimeout(removeStage, 260);
+  cleanupTimer = setTimeout(() => {
+    removeStage();
+    document.documentElement.classList.remove('clip-open');
+    if (window.cosmikBackground) window.cosmikBackground.resume();
+  }, 260);
 }
 
-// Every close button/key goes through here; popstate does the real closing so
-// the history entry added in openClip never gets left behind.
+// Closing is instant and never waits on the browser's history; the entry that
+// openClip added is popped afterwards, and that pop is ignored when it lands.
 function closeClip() {
   if (!modalEl.classList.contains('open')) return;
-  if (historyEntryAdded) history.back();
-  else hideClip();
+  hideClip();
+  if (historyEntryAdded) {
+    historyEntryAdded = false;
+    pendingPops += 1;
+    history.back();
+  }
 }
 
+// The browser's Back button / back gesture.
 window.addEventListener('popstate', () => {
+  if (pendingPops > 0) {
+    pendingPops -= 1;
+    return;
+  }
   historyEntryAdded = false;
   if (modalEl.classList.contains('open')) hideClip();
+});
+
+// Leaving fullscreen with Esc already uses that key press; browsers that also
+// pass it to the page must not close the clip as well.
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) lastFullscreenExit = Date.now();
 });
 
 document.getElementById('clip-modal-close').addEventListener('click', closeClip);
@@ -249,7 +273,9 @@ modalEl.addEventListener('click', (e) => {
   if (e.target === modalEl) closeClip();
 });
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && modalEl.classList.contains('open')) closeClip();
+  if (e.key !== 'Escape' || !modalEl.classList.contains('open')) return;
+  if (document.fullscreenElement || Date.now() - lastFullscreenExit < 400) return;
+  closeClip();
 });
 
 load();

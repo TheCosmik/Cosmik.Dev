@@ -1884,6 +1884,16 @@ a.chat-popout-btn {
   border-color: var(--danger);
 }
 
+html.clip-open .grain {
+  display: none;
+}
+
+/* An identity transform still makes the panel its own layer; the player does
+   not need one once it has finished fading in. */
+.modal-overlay.open .modal-panel.clip-panel {
+  transform: none;
+}
+
 .modal-panel.clip-panel {
   align-items: stretch;
   width: min(920px, 94vw);
