@@ -1556,11 +1556,39 @@ a.chat-popout-btn {
   color: var(--text-dim);
 }
 
+.watch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 16px;
+}
+
+.watch-filter {
+  flex: 1 1 200px;
+  max-width: 320px;
+  min-width: 0;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.watch-filter:focus {
+  border-color: var(--green-dim);
+}
+
 .watch-tabs {
   display: flex;
   gap: 4px;
   width: fit-content;
-  margin: 18px 0 16px;
+  margin: 0;
   padding: 4px;
   background: var(--bg-panel);
   border: 1px solid var(--border-soft);

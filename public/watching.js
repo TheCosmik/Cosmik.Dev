@@ -7,6 +7,7 @@ const tabTodo = document.getElementById('watch-tab-todo');
 const tabDone = document.getElementById('watch-tab-done');
 const countTodo = document.getElementById('watch-count-todo');
 const countDone = document.getElementById('watch-count-done');
+const filterEl = document.getElementById('watch-filter');
 
 const KIND_LABEL = { movie: 'Movie', show: 'Show' };
 
@@ -16,6 +17,7 @@ let results = [];
 let highlight = -1;
 let searchSeq = 0;
 let searchTimer = null;
+let filterQuery = '';
 let searching = false;
 let searchedQuery = null;
 
@@ -40,6 +42,15 @@ function metaLine(item) {
   return [item.year, KIND_LABEL[item.kind]].filter(Boolean).join(' · ');
 }
 
+// Case- and accent-insensitive, so "amelie" finds "Amélie".
+function normalize(text) {
+  return String(text).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+function matchesFilter(item) {
+  return !filterQuery || normalize(`${item.title} ${item.year || ''}`).includes(filterQuery);
+}
+
 function posterMarkup(item, className) {
   const initial = escapeHtml((item.title || '?').trim()[0] || '?').toUpperCase();
   if (!item.poster) return `<div class="${className} is-empty">${initial}</div>`;
@@ -58,17 +69,35 @@ function fixBrokenPosters(root) {
 /* ---------- list ---------- */
 
 function renderGrid() {
-  const todo = items.filter((i) => !i.watched).sort((a, b) => a.addedAt - b.addedAt);
-  const done = items.filter((i) => i.watched).sort((a, b) => b.watchedAt - a.watchedAt);
+  const todo = items.filter((i) => !i.watched && matchesFilter(i)).sort((a, b) => a.addedAt - b.addedAt);
+  const done = items.filter((i) => i.watched && matchesFilter(i)).sort((a, b) => b.watchedAt - a.watchedAt);
+  // While searching, the tab counts show how many matches each list has.
   countTodo.textContent = todo.length;
   countDone.textContent = done.length;
 
   const showing = activeTab === 'todo' ? todo : done;
   gridEl.innerHTML = '';
   if (!showing.length) {
-    gridEl.innerHTML = `<div class="finance-empty watch-empty">${activeTab === 'todo'
-      ? 'Nothing on your watchlist yet. Search above to add a movie or show.'
-      : 'Nothing watched yet. Mark things as watched from your watchlist.'}</div>`;
+    const empty = document.createElement('div');
+    empty.className = 'finance-empty watch-empty';
+    if (filterQuery) {
+      const otherCount = activeTab === 'todo' ? done.length : todo.length;
+      const otherName = activeTab === 'todo' ? 'Watched' : 'Watchlist';
+      empty.textContent = `No matches for “${filterEl.value.trim()}” in your ${activeTab === 'todo' ? 'Watchlist' : 'Watched list'}.`;
+      if (otherCount) {
+        const jump = document.createElement('button');
+        jump.className = 'watch-act primary';
+        jump.style.marginLeft = '10px';
+        jump.textContent = `See ${otherCount} in ${otherName}`;
+        jump.addEventListener('click', () => setTab(activeTab === 'todo' ? 'done' : 'todo'));
+        empty.appendChild(jump);
+      }
+    } else {
+      empty.textContent = activeTab === 'todo'
+        ? 'Nothing on your watchlist yet. Search above to add a movie or show.'
+        : 'Nothing watched yet. Mark things as watched from your watchlist.';
+    }
+    gridEl.appendChild(empty);
     return;
   }
 
@@ -102,6 +131,19 @@ function setTab(tab) {
   tabDone.setAttribute('aria-selected', String(tab === 'done'));
   renderGrid();
 }
+
+filterEl.addEventListener('input', () => {
+  filterQuery = normalize(filterEl.value.trim());
+  renderGrid();
+});
+
+filterEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && filterEl.value) {
+    filterEl.value = '';
+    filterQuery = '';
+    renderGrid();
+  }
+});
 
 tabTodo.addEventListener('click', () => setTab('todo'));
 tabDone.addEventListener('click', () => setTab('done'));
@@ -231,6 +273,9 @@ async function addItem(payload) {
   }
   errorEl.textContent = '';
   inputEl.value = '';
+  // A filter could hide the title that was just added, so start fresh.
+  filterEl.value = '';
+  filterQuery = '';
   results = [];
   searchedQuery = null;
   searchSeq++;

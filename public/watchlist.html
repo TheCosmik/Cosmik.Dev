@@ -37,9 +37,12 @@
       </form>
       <p id="watch-error" class="finance-form-error"></p>
 
-      <div class="watch-tabs" role="tablist">
-        <button id="watch-tab-todo" class="watch-tab is-active" role="tab" aria-selected="true">Watchlist <span id="watch-count-todo">0</span></button>
-        <button id="watch-tab-done" class="watch-tab" role="tab" aria-selected="false">Watched <span id="watch-count-done">0</span></button>
+      <div class="watch-toolbar">
+        <div class="watch-tabs" role="tablist">
+          <button id="watch-tab-todo" class="watch-tab is-active" role="tab" aria-selected="true">Watchlist <span id="watch-count-todo">0</span></button>
+          <button id="watch-tab-done" class="watch-tab" role="tab" aria-selected="false">Watched <span id="watch-count-done">0</span></button>
+        </div>
+        <input id="watch-filter" class="watch-filter" type="search" placeholder="Search your lists" aria-label="Search your lists by name" autocomplete="off" spellcheck="false">
       </div>
       <div id="watch-grid" class="watch-grid"></div>
     </section>
