@@ -855,6 +855,10 @@ html.overlay-transparent .chat-row {
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
+a.chat-popout-btn {
+  text-decoration: none;
+}
+
 .chat-popout-btn:hover {
   color: var(--green);
   border-color: var(--green-dim);

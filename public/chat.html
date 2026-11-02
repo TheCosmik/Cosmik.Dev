@@ -26,7 +26,6 @@
     <a href="/home" class="page-tab">Home</a>
     <a href="/projects" class="page-tab">Projects</a>
     <a href="/chat" class="page-tab is-active">Live Stream</a>
-    <a href="/clips" class="page-tab">Clips</a>
     <a href="/watching" class="page-tab">Watching</a>
     <a href="/finance" class="page-tab">Finances</a>
     <a href="/storage" class="page-tab">Storage</a>
@@ -46,6 +45,10 @@
           <input type="range" id="chat-size" min="12" max="22" step="1" value="14">
           <span class="chat-size-label chat-size-label-lg">A</span>
         </div>
+        <a href="/clips" id="chat-clips-btn" class="chat-popout-btn" title="Saved Twitch and Kick clips">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 5h16v14H4zM10 9.5v5l4.5-2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Clips
+        </a>
         <button id="chat-stats-btn" class="chat-popout-btn chat-stats-btn" title="Stream stats and past streams">
           <svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Stats<span class="chat-stats-live">LIVE</span>
